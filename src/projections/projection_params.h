@@ -179,6 +179,14 @@ class ProjectionParams {
    * @return     A pointer to parameters
    */
   static std::unique_ptr<ProjectionParams> HDL_64();
+
+  /**
+ * @brief      Default parameters for IMR_LaserScanner
+ *
+ * @return     A pointer to parameters
+ */
+  static std::unique_ptr<ProjectionParams> IMR_LaserScanner();
+
   /**
    * @brief      Default parameters for Velodyne from config file
    *
