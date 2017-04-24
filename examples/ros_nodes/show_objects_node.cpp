@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
       "Threshold angle. Below this value, the objects are separated", false, 10,
       "int");
   TCLAP::ValueArg<int> num_beams_arg(
-      "", "num_beams", "Num of vertical beams in laser. One of: [16, 32, 64].",
+      "", "num_beams", "Num of vertical beams in laser. One of: [16, 32, 64, 1(for IMR)].",
       true, 0, "int");
 
   cmd.add(angle_arg);
@@ -66,10 +66,12 @@ int main(int argc, char* argv[]) {
     case 64:
       proj_params_ptr = ProjectionParams::HDL_64();
       break;
+    case 1:
+      proj_params_ptr = ProjectionParams::IMR_LaserScanner();
   }
   if (!proj_params_ptr) {
     fprintf(stderr,
-            "ERROR: wrong number of beams: %d. Should be in [16, 32, 64].\n",
+            "ERROR: wrong number of beams: %d. Should be in [16, 32, 64, 1(for IMR)].\n",
             num_beams_arg.getValue());
     exit(1);
   }

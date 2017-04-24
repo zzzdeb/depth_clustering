@@ -16,9 +16,9 @@
 #ifndef SRC_PROJECTIONS_PROJECTION_PARAMS_H_
 #define SRC_PROJECTIONS_PROJECTION_PARAMS_H_
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "utils/radians.h"
 #include "utils/useful_typedefs.h"
@@ -123,6 +123,14 @@ class ProjectionParams {
    * @return     A pointer to parameters
    */
   static std::unique_ptr<ProjectionParams> HDL_64();
+
+  /**
+ * @brief      Default parameters for IMR_LaserScanner
+ *
+ * @return     A pointer to parameters
+ */
+  static std::unique_ptr<ProjectionParams> IMR_LaserScanner();
+
   /**
    * @brief      Default parameters for Velodyne from config file
    *
