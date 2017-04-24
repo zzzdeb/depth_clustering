@@ -117,6 +117,6 @@ class Cloud {
   CloudProjection::Ptr _projection = nullptr;
 };
 
-}  // namespace depth_clustering
+}  // namespace depth_clustering 
 
 #endif  // SRC_UTILS_CLOUD_H_
