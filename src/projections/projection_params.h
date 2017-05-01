@@ -187,6 +187,14 @@ class ProjectionParams {
  */
   static std::unique_ptr<ProjectionParams> IMR_LaserScanner();
 
+
+/**
+ * @brief      Default parameters for Husky_2d
+ *
+ * @return     A pointer to parameters
+ */
+  static std::unique_ptr<ProjectionParams> Husky_2d();
+
   /**
    * @brief      Default parameters for Velodyne from config file
    *
