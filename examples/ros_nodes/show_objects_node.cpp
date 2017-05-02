@@ -89,13 +89,15 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "show_objects_node");
   ros::NodeHandle nh;
 
-  string topic_clouds = "/front/scan";
+  string topic_clouds = "/velodyne_points";
+  string topic_laser = "/front/scan";
+  string topic_odom = "/odometry/filtered";
 
-  CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
+  LaserRosSubscriber subscriber(&nh, *proj_params_ptr, topic_laser, topic_odom=topic_odom); //CloudOdomRosSubscriber
   Visualizer visualizer;
   visualizer.show();
 
-  int min_cluster_size = 5;
+  int min_cluster_size = 5; // 20
   int max_cluster_size = 100000;
 
   int smooth_window_size = 7;

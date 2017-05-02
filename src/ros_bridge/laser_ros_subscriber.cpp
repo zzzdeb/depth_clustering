@@ -15,6 +15,7 @@
 
 #include "ros_bridge/laser_ros_subscriber.h"
 #include <eigen_conversions/eigen_msg.h>
+#include <tf/Quaternion.h>
 
 #include <vector>
 #include <string>
@@ -34,7 +35,7 @@ using nav_msgs::Odometry;
 // using sensor_msgs::PointCloud2ConstPtr;
 using sensor_msgs::LaserScan;
 
-    using std::vector;
+using std::vector;
 using std::string;
 using std::map;
 
@@ -117,7 +118,7 @@ void LaserRosSubscriber::Callback(const LaserScan::ConstPtr &msg_scan,
                                   const Odometry::ConstPtr &msg_odom)
 {
     // PrintMsgStats(msg_cloud);
-    Cloud::Ptr cloud_ptr = RosScanToCloud(msg_scan);
+    Cloud::Ptr cloud_ptr = RosScanToCloud(msg_scan, msg_odom);
     cloud_ptr->SetPose(RosOdomToPose(msg_odom));
     cloud_ptr->InitProjection(_params);
     ShareDataWithAllClients(*cloud_ptr);
@@ -172,7 +173,40 @@ Cloud::Ptr LaserRosSubscriber::RosScanToCloud(
 
             p.x() = range * cos(angle);
             p.y() = range * sin(angle);
-            p.z() = 0.0;
+            p.z() = 0;
+            cloud.push_back(p);
+        }
+        // else
+        //     p = invalid_point_;
+    }
+
+    return make_shared<Cloud>(cloud);
+}
+
+Cloud::Ptr LaserRosSubscriber::RosScanOdomToCloud(
+    const LaserT::ConstPtr &scan_msg, const OdometryT::ConstPtr &odom_msg)
+{
+
+    float x = odom_msg->pose.pose.orientation.x;
+    float y = odom_msg->pose.pose.orientation.y;
+    float z = odom_msg->pose.pose.orientation.z;
+    float w = odom_msg->pose.pose.orientation.w;
+    tf::Quaternion rot(x, y, z, w);
+    // eigen matrix(3,3) from odom_msg;
+    
+    Cloud cloud;
+
+    for (unsigned int i = 0; i < msg->ranges.size(); ++i)
+    {
+        RichPoint p;
+        float range = msg->ranges[i];
+        if (range > msg->range_min && range < msg->range_max)
+        {
+            float angle = msg->angle_min + i * msg->angle_increment;
+
+            p.x() = range * cos(angle);
+            p.y() = range * sin(angle);
+            p.z() = 0;
             cloud.push_back(p);
         }
         // else
