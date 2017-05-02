@@ -83,7 +83,8 @@ class LaserRosSubscriber : public AbstractSender<Cloud>
   protected:
     Pose RosOdomToPose(const OdometryT::ConstPtr &msg);
     Cloud::Ptr RosScanToCloud(const LaserT::ConstPtr &msg);
-
+    Cloud::Ptr RosScanOdomToCloud(const LaserT::ConstPtr &scan_msg, const OdometryT::ConstPtr &odom_msg);
+    
     ros::NodeHandle *_node_handle;
 
     message_filters::Subscriber<LaserT> *_subscriber_scan;
