@@ -179,6 +179,32 @@ std::unique_ptr<ProjectionParams> ProjectionParams::HDL_64() {
   return mem_utils::make_unique<ProjectionParams>(params);
 }
 
+std::unique_ptr<ProjectionParams> ProjectionParams::IMR_LaserScanner()
+{
+  auto params = ProjectionParams();
+  params.SetSpan(-180_deg, 180_deg, 20, Direction::HORIZONTAL);
+  params.SetSpan(-90.0_deg, 100_deg, 790, Direction::HORIZONTAL);
+  params.FillCosSin();
+  if(!params.valid()){
+    fprintf(stderr, "ERROR: params are not valid!\n");
+    return nullptr;
+  }
+  return mem_utils::make_unique<ProjectionParams>(params);
+}
+
+std::unique_ptr<ProjectionParams> ProjectionParams::Husky_2d()
+{
+  auto params = ProjectionParams();
+  params.SetSpan(-2.3561899662_rad, 2.3561899662_rad, 720, Direction::HORIZONTAL);
+  params.SetSpan(0_deg, 1_deg, 1, Direction::VERTICAL);
+  params.FillCosSin();
+  if(!params.valid()){
+    fprintf(stderr, "ERROR: params are not valid!\n");
+    return nullptr;
+  }
+  return mem_utils::make_unique<ProjectionParams>(params);
+}
+
 std::unique_ptr<ProjectionParams> ProjectionParams::FullSphere(
     const Radians& discretization) {
   auto params = ProjectionParams();

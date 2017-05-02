@@ -14,12 +14,14 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <ros/ros.h>
+#include <ros/console.h>
 
 #include <qapplication.h>
 
 #include <string>
 
 #include "ros_bridge/cloud_odom_ros_subscriber.h"
+#include "ros_bridge/laser_ros_subscriber.h"
 
 #include "clusterers/image_based_clusterer.h"
 #include "ground_removal/depth_ground_remover.h"
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
       "Threshold angle. Below this value, the objects are separated", false, 10,
       "int");
   TCLAP::ValueArg<int> num_beams_arg(
-      "", "num_beams", "Num of vertical beams in laser. One of: [16, 32, 64].",
+      "", "num_beams", "Num of vertical beams in laser. One of: [16, 32, 64, 1(for IMR)].",
       true, 0, "int");
 
   cmd.add(angle_arg);
@@ -56,6 +58,7 @@ int main(int argc, char* argv[]) {
   Radians angle_tollerance = Radians::FromDegrees(angle_arg.getValue());
 
   std::unique_ptr<ProjectionParams> proj_params_ptr = nullptr;
+  ROS_INFO("Beginning");
   switch (num_beams_arg.getValue()) {
     case 16:
       proj_params_ptr = ProjectionParams::VLP_16();
@@ -66,10 +69,17 @@ int main(int argc, char* argv[]) {
     case 64:
       proj_params_ptr = ProjectionParams::HDL_64();
       break;
+    case 1:
+      proj_params_ptr = ProjectionParams::IMR_LaserScanner();
+      break;
+    case 2:
+      ROS_INFO("huba");
+      proj_params_ptr = ProjectionParams::Husky_2d();
   }
+  ROS_INFO("Case Ok");
   if (!proj_params_ptr) {
     fprintf(stderr,
-            "ERROR: wrong number of beams: %d. Should be in [16, 32, 64].\n",
+            "ERROR: wrong number of beams: %d. Should be in [16, 32, 64, 1(for IMR)], 2(for Husky).\n",
             num_beams_arg.getValue());
     exit(1);
   }
@@ -79,13 +89,13 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "show_objects_node");
   ros::NodeHandle nh;
 
-  string topic_clouds = "/velodyne_points";
+  string topic_clouds = "/front/scan";
 
   CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
   Visualizer visualizer;
   visualizer.show();
 
-  int min_cluster_size = 20;
+  int min_cluster_size = 5;
   int max_cluster_size = 100000;
 
   int smooth_window_size = 7;
@@ -97,8 +107,9 @@ int main(int argc, char* argv[]) {
   ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
   clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
 
-  subscriber.AddClient(&depth_ground_remover);
-  depth_ground_remover.AddClient(&clusterer);
+  // subscriber.AddClient(&depth_ground_remover);
+  // depth_ground_remover.AddClient(&clusterer);
+  subscriber.AddClient(&clusterer);
   clusterer.AddClient(visualizer.object_clouds_client());
   subscriber.AddClient(&visualizer);
 
