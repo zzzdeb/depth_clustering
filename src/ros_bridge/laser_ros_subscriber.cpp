@@ -15,13 +15,17 @@
 
 #include "ros_bridge/laser_ros_subscriber.h"
 #include <eigen_conversions/eigen_msg.h>
-#include <tf/Quaternion.h>
 
 #include <vector>
 #include <string>
 #include <algorithm>
 
 #include "utils/pose.h"
+
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Scalar.h>
 
 namespace depth_clustering
 {
@@ -118,7 +122,7 @@ void LaserRosSubscriber::Callback(const LaserScan::ConstPtr &msg_scan,
                                   const Odometry::ConstPtr &msg_odom)
 {
     // PrintMsgStats(msg_cloud);
-    Cloud::Ptr cloud_ptr = RosScanToCloud(msg_scan, msg_odom);
+    Cloud::Ptr cloud_ptr = RosScanToCloud(msg_scan);
     cloud_ptr->SetPose(RosOdomToPose(msg_odom));
     cloud_ptr->InitProjection(_params);
     ShareDataWithAllClients(*cloud_ptr);
@@ -128,9 +132,20 @@ void LaserRosSubscriber::CallbackVelodyne(
     const LaserScan::ConstPtr &msg_scan)
 {
     // PrintMsgStats(msg_cloud);
-    Cloud::Ptr cloud_ptr = RosScanToCloud(msg_scan);
+    if(first_scan)
+    {
+        first_scan = false;
+        first_scan_time = msg_scan->header.stamp;
+    }
+    Cloud::Ptr cloud_ptr = RosScanToCloudTF(msg_scan);
     cloud_ptr->InitProjection(_params);
-    ShareDataWithAllClients(*cloud_ptr);
+    if (++num_of_scans >=80)
+    {
+        ShareDataWithAllClients(*cloud_ptr);
+        cloud = Cloud();
+        num_of_scans = 0;
+
+    }
 }
 
 Pose LaserRosSubscriber::RosOdomToPose(const Odometry::ConstPtr &msg)
@@ -146,23 +161,9 @@ Pose LaserRosSubscriber::RosOdomToPose(const Odometry::ConstPtr &msg)
 Cloud::Ptr LaserRosSubscriber::RosScanToCloud(
     const LaserScan::ConstPtr &msg)
 {
-    //   uint32_t x_offset = msg->fields[0].offset;
-    //   uint32_t y_offset = msg->fields[1].offset;
-    //   uint32_t z_offset = msg->fields[2].offset;
-    //   uint32_t ring_offset = msg->fields[4].offset;
 
     Cloud cloud;
-    //   for (uint32_t point_start_byte = 0, counter = 0;
-    //        point_start_byte < msg->data.size();
-    //        point_start_byte += msg->point_step, ++counter) {
-    //     RichPoint point;
-    //     point.x() = BytesTo<float>(msg->data, point_start_byte + x_offset);
-    //     point.y() = BytesTo<float>(msg->data, point_start_byte + y_offset);
-    //     point.z() = BytesTo<float>(msg->data, point_start_byte + z_offset);
-    //     point.ring() = BytesTo<uint16_t>(msg->data, point_start_byte + ring_offset);
-    //     // point.z *= -1;  // hack
-    //     cloud.push_back(point);
-    //   }
+
     for (unsigned int i = 0; i < msg->ranges.size(); ++i)
     {
         RichPoint p;
@@ -183,30 +184,52 @@ Cloud::Ptr LaserRosSubscriber::RosScanToCloud(
     return make_shared<Cloud>(cloud);
 }
 
-Cloud::Ptr LaserRosSubscriber::RosScanOdomToCloud(
-    const LaserT::ConstPtr &scan_msg, const OdometryT::ConstPtr &odom_msg)
+Cloud::Ptr LaserRosSubscriber::RosScanToCloudTF(
+    const LaserScan::ConstPtr &msg)
 {
 
-    float x = odom_msg->pose.pose.orientation.x;
-    float y = odom_msg->pose.pose.orientation.y;
-    float z = odom_msg->pose.pose.orientation.z;
-    float w = odom_msg->pose.pose.orientation.w;
-    tf::Quaternion rot(x, y, z, w);
-    // eigen matrix(3,3) from odom_msg;
-    
-    Cloud cloud;
-
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener tfListener(tfBuffer);
+    geometry_msgs::TransformStamped transformStamped;
+    try
+    {
+        ros::Time now = ros::Time::now();
+        // transformStamped = tfBuffer.lookupTransform("platform_laser_rotation/base/rotation_center", "platform_laser_rotation/carrier/laser_mount", now,
+        //                                             ros::Duration(3.0));
+        transformStamped.header = msg->header;
+        transformStamped.header.frame_id = "platform_laser_rotation/base/rotation_center";
+        transformStamped.child_frame_id = "platform_laser_rotation/carrier/laser_mount";
+        transformStamped.transform.translation.x = -0.043;
+        transformStamped.transform.translation.y = 0.066;
+        transformStamped.transform.translation.z = 0.130;
+        
+        double dur = (msg->header.stamp-first_scan_time).toSec();
+        tf2::Quaternion rot((dur/0.025)*0.0785, 0, -1.570);
+        transformStamped.transform.rotation.x = rot.x();
+        transformStamped.transform.rotation.y = rot.y();
+        transformStamped.transform.rotation.z = rot.z();
+        transformStamped.transform.rotation.w = rot.w();
+    }
+    catch (tf2::TransformException &ex)
+    {
+        ROS_WARN("Could NOT transform a to b: %s", ex.what());
+    }
     for (unsigned int i = 0; i < msg->ranges.size(); ++i)
     {
         RichPoint p;
+        Eigen::Vector3d p_in;
+        Eigen::Vector3d p_out;
         float range = msg->ranges[i];
         if (range > msg->range_min && range < msg->range_max)
         {
             float angle = msg->angle_min + i * msg->angle_increment;
 
-            p.x() = range * cos(angle);
-            p.y() = range * sin(angle);
-            p.z() = 0;
+            p_in.x() = range * sin(angle);
+            p_in.y() = range * cos(angle);
+            p_in.z() = 0;
+
+            tf2::doTransform(p_in, p_out, transformStamped);
+            p.AsEigenVector() = p_out.cast<float>();
             cloud.push_back(p);
         }
         // else

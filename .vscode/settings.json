@@ -32,6 +32,8 @@
         "tuple": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "*.ipp": "cpp",
+        "core": "cpp"
     }
 }

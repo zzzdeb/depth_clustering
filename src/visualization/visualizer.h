@@ -29,22 +29,26 @@
 #include "utils/cloud.h"
 #include "utils/useful_typedefs.h"
 
-namespace depth_clustering {
+namespace depth_clustering
+{
 
-class IUpdateListener {
- public:
+class IUpdateListener
+{
+public:
   virtual void onUpdate() = 0;
 };
 
 class ObjectPtrStorer
-    : public AbstractClient<std::unordered_map<uint16_t, Cloud>> {
- public:
+    : public AbstractClient<std::unordered_map<uint16_t, Cloud>>
+{
+public:
   ObjectPtrStorer() : AbstractClient<std::unordered_map<uint16_t, Cloud>>() {}
 
-  void OnNewObjectReceived(const std::unordered_map<uint16_t, Cloud>& clouds,
+  void OnNewObjectReceived(const std::unordered_map<uint16_t, Cloud> &clouds,
                            const int id) override;
 
-  void SetUpdateListener(IUpdateListener* update_listener) {
+  void SetUpdateListener(IUpdateListener *update_listener)
+  {
     _update_listener = update_listener;
   }
 
@@ -52,9 +56,9 @@ class ObjectPtrStorer
 
   std::unordered_map<uint16_t, Cloud> object_clouds() const;
 
- private:
+private:
   std::unordered_map<uint16_t, Cloud> _obj_clouds;
-  IUpdateListener* _update_listener;
+  IUpdateListener *_update_listener;
   mutable std::mutex _cluster_mutex;
 };
 
@@ -63,24 +67,25 @@ class ObjectPtrStorer
  */
 class Visualizer : public QGLViewer,
                    public AbstractClient<Cloud>,
-                   public IUpdateListener {
- public:
-  explicit Visualizer(QWidget* parent = 0);
+                   public IUpdateListener
+{
+public:
+  explicit Visualizer(QWidget *parent = 0);
   virtual ~Visualizer();
 
-  void OnNewObjectReceived(const Cloud& cloud, const int id) override;
+  void OnNewObjectReceived(const Cloud &cloud, const int id) override;
 
   void onUpdate() override;
 
-  ObjectPtrStorer* object_clouds_client() { return &_cloud_obj_storer; }
+  ObjectPtrStorer *object_clouds_client() { return &_cloud_obj_storer; }
 
- protected:
+protected:
   void draw() override;
   void init() override;
 
- private:
-  void DrawCloud(const Cloud& cloud);
-  void DrawCube(const Eigen::Vector3f& center, const Eigen::Vector3f& scale);
+private:
+  void DrawCloud(const Cloud &cloud);
+  void DrawCube(const Eigen::Vector3f &center, const Eigen::Vector3f &scale);
 
   bool _updated;
   ObjectPtrStorer _cloud_obj_storer;
@@ -88,6 +93,6 @@ class Visualizer : public QGLViewer,
   mutable std::mutex _cloud_mutex;
 };
 
-}  // namespace depth_clustering
+} // namespace depth_clustering
 
-#endif  // SRC_VISUALIZATION_VISUALIZER_H_
+#endif // SRC_VISUALIZATION_VISUALIZER_H_
