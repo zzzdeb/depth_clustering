@@ -189,8 +189,8 @@ std::unique_ptr<ProjectionParams> ProjectionParams::HDL_64() {
 std::unique_ptr<ProjectionParams> ProjectionParams::IMR_LaserScanner()
 {
   auto params = ProjectionParams();
-  params.SetSpan(-180_deg, 180_deg, 20, Direction::HORIZONTAL);
-  params.SetSpan(-90.0_deg, 100_deg, 790, Direction::HORIZONTAL);
+  params.SetSpan(-180_deg, 180_deg, 80, Direction::HORIZONTAL);
+  params.SetSpan(-2.356195_rad, 1.0995574_rad, 793, Direction::VERTICAL);
   params.FillCosSin();
   if(!params.valid()){
     fprintf(stderr, "ERROR: params are not valid!\n");

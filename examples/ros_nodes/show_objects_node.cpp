@@ -90,14 +90,14 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle nh;
 
   string topic_clouds = "/velodyne_points";
-  string topic_laser = "/front/scan";
-  string topic_odom = "/odometry/filtered";
+  string topic_laser = "/hokuyo/scan/raw";
+  string topic_odom = "";
 
   LaserRosSubscriber subscriber(&nh, *proj_params_ptr, topic_laser, topic_odom=topic_odom); //CloudOdomRosSubscriber
   Visualizer visualizer;
   visualizer.show();
 
-  int min_cluster_size = 5; // 20
+  int min_cluster_size = 50; // 20
   int max_cluster_size = 100000;
 
   int smooth_window_size = 7;
@@ -109,11 +109,13 @@ int main(int argc, char* argv[]) {
   ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
   clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
 
-  // subscriber.AddClient(&depth_ground_remover);
-  // depth_ground_remover.AddClient(&clusterer);
-  subscriber.AddClient(&clusterer);
+  subscriber.AddClient(&depth_ground_remover);
+  depth_ground_remover.AddClient(&clusterer);
+  depth_ground_remover.AddClient(&visualizer);  ///
+  // subscriber.AddClient(&clusterer);
   clusterer.AddClient(visualizer.object_clouds_client());
-  subscriber.AddClient(&visualizer);
+   ///
+  //subscriber.AddClient(&visualizer);
 
   fprintf(stderr, "INFO: Running with angle tollerance: %f degrees\n",
           angle_tollerance.ToDegrees());
