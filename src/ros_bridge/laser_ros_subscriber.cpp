@@ -144,7 +144,6 @@ void LaserRosSubscriber::CallbackVelodyne(
         ShareDataWithAllClients(*cloud_ptr);
         cloud = Cloud();
         num_of_scans = 0;
-
     }
 }
 

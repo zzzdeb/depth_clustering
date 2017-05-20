@@ -110,13 +110,13 @@ int main(int argc, char* argv[]) {
   ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
   clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
 
-  // subscriber.AddClient(&depth_ground_remover);
+  subscriber.AddClient(&depth_ground_remover);
   // depth_ground_remover.AddClient(&clusterer);
-  // depth_ground_remover.AddClient(&visualizer);  ///
-  subscriber.AddClient(&clusterer);
+  depth_ground_remover.AddClient(&visualizer);  ///
+  // subscriber.AddClient(&clusterer);
   clusterer.AddClient(visualizer.object_clouds_client());
    ///
-  clusterer.AddClient(&visualizer);
+  // clusterer.AddClient(&visualizer);
 
   fprintf(stderr, "INFO: Running with angle tollerance: %f degrees\n",
           angle_tollerance.ToDegrees());
