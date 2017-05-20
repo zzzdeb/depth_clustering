@@ -29,7 +29,7 @@
 #include "projections/spherical_projection.h"
 #include "utils/radians.h"
 #include "visualization/cloud_saver.h"
-#include "visualization/visualizer.h"
+#include <visualization_ros/visualizer_ros.h>
 
 #include "tclap/CmdLine.h"
 
@@ -95,8 +95,9 @@ int main(int argc, char* argv[]) {
 
   // LaserRosSubscriber subscriber(&nh, *proj_params_ptr, topic_laser, topic_odom=topic_odom); //CloudOdomRosSubscriber
   CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
-  Visualizer visualizer;
+  VisualizerRos visualizer;
   visualizer.show();
+  // visualizer.addNode(&nh);
 
   int min_cluster_size = 50; // 20
   int max_cluster_size = 100000;//100000
@@ -111,7 +112,7 @@ int main(int argc, char* argv[]) {
   clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
 
   subscriber.AddClient(&depth_ground_remover);
-  // depth_ground_remover.AddClient(&clusterer);
+  depth_ground_remover.AddClient(&clusterer);
   depth_ground_remover.AddClient(&visualizer);  ///
   // subscriber.AddClient(&clusterer);
   clusterer.AddClient(visualizer.object_clouds_client());
