@@ -125,10 +125,16 @@ int main(int argc, char *argv[])
     // create and run loader thread
     std::thread loader_thread(ReadData, angle_tollerance, in_path, &visualizer);
 
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
+
     // if we close the qt application we will be here
     auto exit_code = application.exec();
 
     // join thread after the application is dead
     loader_thread.join();
+
+    // if we close application, still wait for ros to shutdown
+    ros::waitForShutdown();
     return exit_code;
 }

@@ -39,50 +39,16 @@ using namespace depth_clustering;
 
 using ClustererT = ImageBasedClusterer<LinearImageLabeler<>>;
 
-int main(int argc, char* argv[]) {
-  TCLAP::CmdLine cmd(
-      "Subscribe to /velodyne_points topic and show clustering on the data.",
-      ' ', "1.0");
-  TCLAP::ValueArg<int> angle_arg(
-      "", "angle",
-      "Threshold angle. Below this value, the objects are separated", false, 10,
-      "int");
-  TCLAP::ValueArg<int> num_beams_arg(
-      "", "num_beams", "Num of vertical beams in laser. One of: [16, 32, 64, 1(for IMR)].",
-      true, 0, "int");
-
-  cmd.add(angle_arg);
-  cmd.add(num_beams_arg);
-  cmd.parse(argc, argv);
-
-  Radians angle_tollerance = Radians::FromDegrees(angle_arg.getValue());
+int main(int argc, char *argv[])
+{
+  ros::init(argc, argv, "fast_segmentation");
+  Radians angle_tollerance = Radians::FromDegrees(angle_arg);
 
   std::unique_ptr<ProjectionParams> proj_params_ptr = nullptr;
-  ROS_INFO("Beginning");
-  switch (num_beams_arg.getValue()) {
-    case 16:
-      proj_params_ptr = ProjectionParams::VLP_16();
-      break;
-    case 32:
-      proj_params_ptr = ProjectionParams::HDL_32();
-      break;
-    case 64:
-      proj_params_ptr = ProjectionParams::HDL_64();
-      break;
-    case 1:
-      proj_params_ptr = ProjectionParams::IMR_LaserScanner();
-      break;
-    case 2:
-      ROS_INFO("huba");
-      proj_params_ptr = ProjectionParams::Husky_2d();
-  }
-  ROS_INFO("Case Ok");
-  if (!proj_params_ptr) {
-    fprintf(stderr,
-            "ERROR: wrong number of beams: %d. Should be in [16, 32, 64, 1(for IMR)], 2(for Husky).\n",
-            num_beams_arg.getValue());
-    exit(1);
-  }
+
+    proj_params_ptr = ProjectionParams::IMR_LaserScanner();
+
+    proj_params_ptr = ProjectionParams::Husky_2d();
 
   QApplication application(argc, argv);
 
@@ -99,8 +65,8 @@ int main(int argc, char* argv[]) {
   visualizer.show();
   // visualizer.addNode(&nh);
 
-  int min_cluster_size = 50; // 20
-  int max_cluster_size = 100000;//100000
+  int min_cluster_size = 50;     // 20
+  int max_cluster_size = 100000; //100000
 
   int smooth_window_size = 7;
   Radians ground_remove_angle = 7_deg;
@@ -113,10 +79,10 @@ int main(int argc, char* argv[]) {
 
   subscriber.AddClient(&depth_ground_remover);
   depth_ground_remover.AddClient(&clusterer);
-  depth_ground_remover.AddClient(&visualizer);  ///
+  depth_ground_remover.AddClient(&visualizer); ///
   // subscriber.AddClient(&clusterer);
   clusterer.AddClient(visualizer.object_clouds_client());
-   ///
+  ///
   // clusterer.AddClient(&visualizer);
 
   fprintf(stderr, "INFO: Running with angle tollerance: %f degrees\n",
