@@ -11,13 +11,21 @@ using namespace depth_clustering;
 
 TEST(TestProjParams, test_init) {
   ProjectionParams params;
-  EXPECT_EQ(false, params.valid());
+  try {
+    params.valid();
+    FAIL();
+  } catch (const std::runtime_error& error) {
+    std::string expected = "Projection parameters invalid.";
+    EXPECT_EQ(expected, error.what());
+  }
 }
 
 TEST(TestProjParams, from_angle) {
   ProjectionParams params;
-  params.SetSpan(0_deg, 10_deg, 1_deg, ProjectionParams::Direction::VERTICAL);
-  params.SetSpan(0_deg, 10_deg, 1_deg, ProjectionParams::Direction::HORIZONTAL);
+  params.SetSpan(SpanParams(0_deg, 10_deg, 1_deg),
+                 SpanParams::Direction::VERTICAL);
+  params.SetSpan(SpanParams(0_deg, 10_deg, 1_deg),
+                 SpanParams::Direction::HORIZONTAL);
   EXPECT_EQ(true, params.valid());
   EXPECT_EQ(0, params.ColFromAngle(0_deg));
   EXPECT_EQ(1, params.ColFromAngle(1_deg));
