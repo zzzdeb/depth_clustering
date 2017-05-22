@@ -14,12 +14,14 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <ros/ros.h>
+#include <ros/console.h>
 
 #include <qapplication.h>
 
 #include <string>
 
 #include "ros_bridge/cloud_odom_ros_subscriber.h"
+#include "ros_bridge/laser_ros_subscriber.h"
 
 #include "clusterers/image_based_clusterer.h"
 #include "ground_removal/depth_ground_remover.h"
@@ -27,7 +29,7 @@
 #include "projections/spherical_projection.h"
 #include "utils/radians.h"
 #include "visualization/cloud_saver.h"
-#include "visualization/visualizer.h"
+#include <visualization/visualizer.h>
 
 #include "tclap/CmdLine.h"
 
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
       "Threshold angle. Below this value, the objects are separated", false, 10,
       "int");
   TCLAP::ValueArg<int> num_beams_arg(
-      "", "num_beams", "Num of vertical beams in laser. One of: [16, 32, 64].",
+      "", "num_beams", "Num of vertical beams in laser. One of: [16, 32, 64, 1(for IMR)].",
       true, 0, "int");
 
   cmd.add(angle_arg);
@@ -56,6 +58,7 @@ int main(int argc, char* argv[]) {
   Radians angle_tollerance = Radians::FromDegrees(angle_arg.getValue());
 
   std::unique_ptr<ProjectionParams> proj_params_ptr = nullptr;
+  ROS_INFO("Beginning");
   switch (num_beams_arg.getValue()) {
     case 16:
       proj_params_ptr = ProjectionParams::VLP_16();
@@ -66,10 +69,17 @@ int main(int argc, char* argv[]) {
     case 64:
       proj_params_ptr = ProjectionParams::HDL_64();
       break;
+    case 1:
+      proj_params_ptr = ProjectionParams::IMR_LaserScanner();
+      break;
+    case 2:
+      ROS_INFO("huba");
+      proj_params_ptr = ProjectionParams::Husky_2d();
   }
+  ROS_INFO("Case Ok");
   if (!proj_params_ptr) {
     fprintf(stderr,
-            "ERROR: wrong number of beams: %d. Should be in [16, 32, 64].\n",
+            "ERROR: wrong number of beams: %d. Should be in [16, 32, 64, 1(for IMR)], 2(for Husky).\n",
             num_beams_arg.getValue());
     exit(1);
   }
@@ -79,14 +89,18 @@ int main(int argc, char* argv[]) {
   ros::init(argc, argv, "show_objects_node");
   ros::NodeHandle nh;
 
-  string topic_clouds = "/velodyne_points";
+  string topic_clouds = "/assembled_laser";
+  string topic_laser = "/hokuyo/scan/raw";
+  string topic_odom = "";
 
+  // LaserRosSubscriber subscriber(&nh, *proj_params_ptr, topic_laser, topic_odom=topic_odom); //CloudOdomRosSubscriber
   CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
-  Visualizer visualizer;
+  VisualizerRos visualizer;
   visualizer.show();
+  // visualizer.addNode(&nh);
 
-  int min_cluster_size = 20;
-  int max_cluster_size = 100000;
+  int min_cluster_size = 50; // 20
+  int max_cluster_size = 100000;//100000
 
   int smooth_window_size = 7;
   Radians ground_remove_angle = 7_deg;
@@ -99,8 +113,11 @@ int main(int argc, char* argv[]) {
 
   subscriber.AddClient(&depth_ground_remover);
   depth_ground_remover.AddClient(&clusterer);
+  depth_ground_remover.AddClient(&visualizer);  ///
+  // subscriber.AddClient(&clusterer);
   clusterer.AddClient(visualizer.object_clouds_client());
-  subscriber.AddClient(&visualizer);
+   ///
+  // clusterer.AddClient(&visualizer);
 
   fprintf(stderr, "INFO: Running with angle tollerance: %f degrees\n",
           angle_tollerance.ToDegrees());
