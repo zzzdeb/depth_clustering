@@ -34,6 +34,9 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "*.ipp": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "codecvt": "cpp",
+        "condition_variable": "cpp",
+        "memory": "cpp"
     }
 }

@@ -5,11 +5,28 @@ target_link_libraries(show_objects_node
                       projections
                       ground_remove
                       visualization
-                      visualization_ros
                       ${MY_QT_LIBRARIES}
                       ${Boost_LIBRARIES}
                       ${catkin_LIBRARIES}
                       ${PCL_LIBRARIES}
+                      ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(show_objects_mossmann_ros show_objects_mossmann_ros.cpp)
+target_link_libraries(show_objects_mossmann_ros
+                      ros_vis
+                      identifiable
+                      velodyne_utils
+                      ros_bridge
+                      image_labeler
+                      projections
+                      ground_remove
+                      visualization
+                      folder_reader
+                      ${MY_QT_LIBRARIES}
+                      ${Boost_LIBRARIES}
+                      ${catkin_LIBRARIES}
+                      ${PCL_LIBRARIES}
+                      ${OpenCV_LIBS}
                       ${CMAKE_THREAD_LIBS_INIT})
 
 if (${PCL_FOUND})

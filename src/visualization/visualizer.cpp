@@ -159,7 +159,7 @@ void ObjectPtrStorer::OnNewObjectReceived(
     const unordered_map<uint16_t, Cloud>& clouds, const int id) {
   lock_guard<mutex> guard(_cluster_mutex);
   _obj_clouds = clouds;
-
+  
   if (_update_listener) {
     _update_listener->onUpdate();
   }
