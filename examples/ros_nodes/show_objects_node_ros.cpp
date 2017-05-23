@@ -29,7 +29,7 @@
 #include "projections/spherical_projection.h"
 #include "utils/radians.h"
 #include "visualization/cloud_saver.h"
-#include <visualization/visualizer.h>
+#include <rosbridge/ros_visualizer.h>
 
 #include "tclap/CmdLine.h"
 
@@ -52,7 +52,6 @@ int main(int argc, char *argv[])
 
   QApplication application(argc, argv);
 
-  ros::init(argc, argv, "show_objects_node");
   ros::NodeHandle nh;
 
   string topic_clouds = "/assembled_laser";
@@ -61,11 +60,11 @@ int main(int argc, char *argv[])
 
   // LaserRosSubscriber subscriber(&nh, *proj_params_ptr, topic_laser, topic_odom=topic_odom); //CloudOdomRosSubscriber
   CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
-  VisualizerRos visualizer;
+  RosVisualizer visualizer;
   visualizer.show();
-  // visualizer.addNode(&nh);
+  visualizer.initNode(nh);
 
-  int min_cluster_size = 50;     // 20
+  int min_cluster_size = 20;     // 20
   int max_cluster_size = 100000; //100000
 
   int smooth_window_size = 7;
@@ -82,8 +81,6 @@ int main(int argc, char *argv[])
   depth_ground_remover.AddClient(&visualizer); ///
   // subscriber.AddClient(&clusterer);
   clusterer.AddClient(visualizer.object_clouds_client());
-  ///
-  // clusterer.AddClient(&visualizer);
 
   fprintf(stderr, "INFO: Running with angle tollerance: %f degrees\n",
           angle_tollerance.ToDegrees());
