@@ -1,0 +1,6 @@
+#Parameters for husky bag file recorded by me
+fixed_frame: "map"
+for_data: 0 # for husky_2d
+min_cluster_size: 5
+max_cluster_size: 100000
+topic_clouds: "/front/scan/cloud"

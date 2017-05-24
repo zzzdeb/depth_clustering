@@ -11,6 +11,19 @@ target_link_libraries(show_objects_node
                       ${PCL_LIBRARIES}
                       ${CMAKE_THREAD_LIBS_INIT})
 
+add_executable(show_objects_node_ros show_objects_node_ros.cpp)
+target_link_libraries(show_objects_node_ros
+                      ros_bridge
+                      image_labeler
+                      projections
+                      ground_remove
+                      visualization
+                      ${MY_QT_LIBRARIES}
+                      ${Boost_LIBRARIES}
+                      ${catkin_LIBRARIES}
+                      ${PCL_LIBRARIES}
+                      ${CMAKE_THREAD_LIBS_INIT})
+
 add_executable(show_objects_mossmann_ros show_objects_mossmann_ros.cpp)
 target_link_libraries(show_objects_mossmann_ros
                       ros_vis

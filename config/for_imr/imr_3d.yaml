@@ -1,0 +1,6 @@
+#Parameters for IMR Reichezech data
+fixed_frame: "map"
+for_data: 1 # 0 for husky_2d 1 for IMR_3d
+min_cluster_size: 20
+max_cluster_size: 100000
+topic_clouds: "/assembled_laser"

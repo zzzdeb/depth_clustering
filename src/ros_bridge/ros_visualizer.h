@@ -9,7 +9,9 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+
 #include <utility>
+#include <vector>
 
 namespace depth_clustering
 {
@@ -63,7 +65,7 @@ protected:
   void LabelPCL(PointCloudT::Ptr pcl_cloud);
 private:
   void PubCloud(const PointCloudT &cloud);
-  void PubCubes(const Eigen::Vector3f &center, const Eigen::Vector3f &scale);
+  void PubCubes(const std::vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> &cent_exts);
 
   bool _updated;
   ObjectPtrStorer _cloud_obj_storer;

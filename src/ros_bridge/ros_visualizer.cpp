@@ -108,7 +108,7 @@ void RosVisualizer::draw()
         }
         cent_exts.push_back(std::make_pair(center, extent));
     }
-    PubCubes(cent_exts);
+    // PubCubes(cent_exts);
 }
 
 void RosVisualizer::init()
@@ -129,19 +129,6 @@ void RosVisualizer::PubCloud(const PointCloudT &pcl_cloud)
 
 void RosVisualizer::PubCubes(const vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> &cent_exts)
 {
-    // glTranslatef(center.x(), center.y(), center.z());
-    // glScalef(scale.x(), scale.y(), scale.z());
-    // float volume = scale.x() * scale.y() * scale.z();
-    // if (volume < 30.0f && scale.x() < 6 && scale.y() < 6 && scale.z() < 6)
-    // {
-    //     glColor3f(0.0f, 0.2f, 0.9f);
-    //     glLineWidth(4.0f);
-    // }
-    // else
-    // {
-    //     glColor3f(0.3f, 0.3f, 0.3f);
-    //     glLineWidth(1.0f);
-    // }
     visualization_msgs::MarkerArray markers;
     for (const auto cent_ext : cent_exts)
     {
@@ -168,7 +155,7 @@ void RosVisualizer::PubCubes(const vector<std::pair<Eigen::Vector3f, Eigen::Vect
         marker.color.b = 0.0;
         //only if using a MESH_RESOURCE marker type:
         marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-        
+        markers.markers.push_back(marker);
     }
     marker_pub.publish(markers);
 }
