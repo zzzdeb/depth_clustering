@@ -19,8 +19,7 @@ using std::unordered_map;
 typedef pcl::PointXYZL PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
-RosVisualizer::RosVisualizer(QWidget *parent)
-    : Visualizer(parent)
+RosVisualizer::RosVisualizer()
 {
     _cloud_obj_storer.SetUpdateListener(this);
     label_client_.SetUpdateListener(this);
@@ -39,8 +38,11 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud)
 {
     // label cloud from image labels
     vector<vector<int>> labels(0);
+    ROS_INFO("labelpcl thread %i", std::this_thread::get_id());
+    cv::Mat a = label_client_.label_image();
     for (int row = 0; row < label_client_.label_image().rows; ++row)
     {
+        ROS_INFO("labelpcl thread %i", std::this_thread::get_id());
         for (int col = 0; col < label_client_.label_image().cols; ++col)
         {
             const auto &point_container = _cloud.projection_ptr()->at(row, col);
@@ -111,19 +113,19 @@ void RosVisualizer::draw()
     // PubCubes(cent_exts);
 }
 
-void RosVisualizer::init()
-{
-    setSceneRadius(100.0);
-    camera()->showEntireScene();
-    glDisable(GL_LIGHTING);
-}
+// void RosVisualizer::init()
+// {
+//     // setSceneRadius(100.0);
+//     // camera()->showEntireScene();
+//     // glDisable(GL_LIGHTING);
+// }
 
 void RosVisualizer::PubCloud(const PointCloudT &pcl_cloud)
 {
     sensor_msgs::PointCloud2 cloud2;
     pcl::toROSMsg(pcl_cloud, cloud2);
     cloud2.header.stamp = ros::Time::now();
-    cloud2.header.frame_id = "world";
+    cloud2.header.frame_id = frame_id_;
     cloud_pub.publish(cloud2);
 }
 
@@ -133,7 +135,7 @@ void RosVisualizer::PubCubes(const vector<std::pair<Eigen::Vector3f, Eigen::Vect
     for (const auto cent_ext : cent_exts)
     {
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "world";
+        marker.header.frame_id = frame_id_;
         marker.header.stamp = ros::Time();
         marker.ns = "my_namespace";
         marker.id = 0;
@@ -183,19 +185,20 @@ void RosVisualizer::OnNewObjectReceived(const Cloud &cloud, const int id)
 
 void RosVisualizer::onUpdate()
 {
-    this->update();
+    this->draw();
 }
 
 cv::Mat LabelClient::label_image() const
 {
-    lock_guard<mutex> guard(_cluster_mutex);
+    lock_guard<mutex> guard(_shared_cluster_mutex);
     return label_image_;
 }
 
 void LabelClient::OnNewObjectReceived(
     const cv::Mat &label_image, const int id)
 {
-    lock_guard<mutex> guard(_cluster_mutex);
+    lock_guard<mutex> guard(_shared_cluster_mutex);
+    ROS_INFO("label_onor thread %i", std::this_thread::get_id());
     label_image_ = label_image;
 
     if (_update_listener)

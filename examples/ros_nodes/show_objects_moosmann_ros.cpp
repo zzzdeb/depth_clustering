@@ -71,10 +71,12 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
     clusterer.SetLabelImageClient(visualizer->label_client());
 
     depth_ground_remover.AddClient(&clusterer);
-    clusterer.AddClient(visualizer->object_clouds_client());
+    // clusterer.AddClient(visualizer->object_clouds_client());
 
     for (const auto &path : image_reader.GetAllFilePaths())
-    {
+    {   
+        if(!ros::ok())
+            break;
         auto depth_image = MatFromDepthPng(path);
         auto cloud_ptr = Cloud::FromImage(depth_image, *proj_params_ptr);
         time_utils::Timer timer;
@@ -115,13 +117,13 @@ int main(int argc, char *argv[])
     string in_path = path_to_data_arg.getValue();
     fprintf(stderr, "INFO: Reading from: %s \n", in_path.c_str());
 
-    QApplication application(argc, argv);
+    // QApplication application(argc, argv);
     ros::NodeHandle nh;
     // visualizer should be created from a gui thread
     RosVisualizer visualizer;
     visualizer.initNode(nh);
     visualizer.set_frame_id("world");
-    visualizer.show();
+    // visualizer.show();
 
     // create and run loader thread
     std::thread loader_thread(ReadData, angle_tollerance, in_path, &visualizer);
@@ -130,12 +132,12 @@ int main(int argc, char *argv[])
     // spinner.start();
 
     // if we close the qt application we will be here
-    auto exit_code = application.exec();
+    // auto exit_code = application.exec();
 
     // join thread after the application is dead
     loader_thread.join();
 
     // if we close application, still wait for ros to shutdown
     // ros::waitForShutdown();
-    return exit_code;
+    return 0;
 }

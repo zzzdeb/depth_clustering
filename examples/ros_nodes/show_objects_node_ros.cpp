@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
   nh_p.getParam("cloud_frame_id", cloud_frame_id);
   visualizer.set_frame_id(cloud_frame_id);
 
-  visualizer.show();
+  // visualizer.show();
   // visualizer.initNode(nh);
 
   int min_cluster_size;
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
   // depth_ground_remover.AddClient(&visualizer);
   subscriber.AddClient(&clusterer);
   subscriber.AddClient(&visualizer);
-  clusterer.AddClient(visualizer.object_clouds_client());
+  // clusterer.AddClient(visualizer.object_clouds_client());
 
   fprintf(stderr, "INFO: Running with angle tollerance: %f degrees\n",
           angle_tollerance.ToDegrees());
@@ -122,5 +122,5 @@ int main(int argc, char *argv[])
 
   // if we close application, still wait for ros to shutdown
   ros::waitForShutdown();
-  return exit_code;
+  return 0;
 }
