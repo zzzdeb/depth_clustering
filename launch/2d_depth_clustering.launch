@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+<node pkg="depth_clustering" type="show_objects_node_ros" name="fast_segmentation" output="screen">
+    <rosparam command="load" file="$(find depth_clustering)/config/for_imr/husky_2d.yaml" />
+</node>
+</launch>

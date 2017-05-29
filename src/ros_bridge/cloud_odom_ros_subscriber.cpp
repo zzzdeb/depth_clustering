@@ -117,7 +117,7 @@ void CloudOdomRosSubscriber::Callback(const PointCloud2::ConstPtr& msg_cloud,
 
 void CloudOdomRosSubscriber::CallbackVelodyne(
     const PointCloud2::ConstPtr& msg_cloud) {
-  PrintMsgStats(msg_cloud);
+  // PrintMsgStats(msg_cloud);
   Cloud::Ptr cloud_ptr = RosCloudToCloud(msg_cloud);
   cloud_ptr->InitProjection(_params);
   ShareDataWithAllClients(*cloud_ptr);
@@ -147,7 +147,8 @@ Cloud::Ptr CloudOdomRosSubscriber::RosCloudToCloud(
     point.x() = BytesTo<float>(msg->data, point_start_byte + x_offset);
     point.y() = BytesTo<float>(msg->data, point_start_byte + y_offset);
     point.z() = BytesTo<float>(msg->data, point_start_byte + z_offset);
-    point.ring() = BytesTo<uint16_t>(msg->data, point_start_byte + ring_offset);
+    // ring for Velodyne Laser Scanners
+    // point.ring() = BytesTo<uint16_t>(msg->data, point_start_byte + ring_offset);
     // point.z *= -1;  // hack
     cloud.push_back(point);
   }

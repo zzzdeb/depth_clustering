@@ -120,13 +120,14 @@ int main(int argc, char *argv[])
     // visualizer should be created from a gui thread
     RosVisualizer visualizer;
     visualizer.initNode(nh);
+    visualizer.set_frame_id("world");
     visualizer.show();
 
     // create and run loader thread
     std::thread loader_thread(ReadData, angle_tollerance, in_path, &visualizer);
 
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
+    // ros::AsyncSpinner spinner(1);
+    // spinner.start();
 
     // if we close the qt application we will be here
     auto exit_code = application.exec();
@@ -135,6 +136,6 @@ int main(int argc, char *argv[])
     loader_thread.join();
 
     // if we close application, still wait for ros to shutdown
-    ros::waitForShutdown();
+    // ros::waitForShutdown();
     return exit_code;
 }

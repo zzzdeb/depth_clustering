@@ -28,6 +28,7 @@
 #include "projections/spherical_projection.h"
 #include "utils/radians.h"
 #include <visualization/visualizer.h>
+#include <ros_bridge/ros_visualizer.h>
 
 using std::string;
 
@@ -72,14 +73,20 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  QApplication application(argc, argv);
+  // QApplication application(argc, argv);
 
   string topic_odom;
   nh_p.param<string>("topic_odom", topic_odom, "");
 
   // LaserRosSubscriber subscriber(&nh, *proj_params_ptr, topic_laser, topic_odom = topic_odom); //CloudOdomRosSubscriber
   CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
-  Visualizer visualizer;
+  RosVisualizer visualizer;
+  visualizer.initNode(nh_p);
+
+  std::string cloud_frame_id;
+  nh_p.getParam("cloud_frame_id", cloud_frame_id);
+  visualizer.set_frame_id(cloud_frame_id);
+
   visualizer.show();
   // visualizer.initNode(nh);
 
@@ -96,10 +103,12 @@ int main(int argc, char *argv[])
 
   ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
   clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
-
-  subscriber.AddClient(&depth_ground_remover);
-  depth_ground_remover.AddClient(&clusterer);
-  depth_ground_remover.AddClient(&visualizer);
+  clusterer.SetLabelImageClient(visualizer.label_client());
+  // subscriber.AddClient(&depth_ground_remover);
+  // depth_ground_remover.AddClient(&clusterer);
+  // depth_ground_remover.AddClient(&visualizer);
+  subscriber.AddClient(&clusterer);
+  subscriber.AddClient(&visualizer);
   clusterer.AddClient(visualizer.object_clouds_client());
 
   fprintf(stderr, "INFO: Running with angle tollerance: %f degrees\n",
@@ -109,7 +118,7 @@ int main(int argc, char *argv[])
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
-  auto exit_code = application.exec();
+  // auto exit_code = application.exec();
 
   // if we close application, still wait for ros to shutdown
   ros::waitForShutdown();

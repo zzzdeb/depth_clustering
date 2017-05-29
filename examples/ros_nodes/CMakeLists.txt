@@ -14,6 +14,7 @@ target_link_libraries(show_objects_node
 add_executable(show_objects_node_ros show_objects_node_ros.cpp)
 target_link_libraries(show_objects_node_ros
                       ros_bridge
+                      ros_vis
                       image_labeler
                       projections
                       ground_remove
@@ -24,8 +25,8 @@ target_link_libraries(show_objects_node_ros
                       ${PCL_LIBRARIES}
                       ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(show_objects_mossmann_ros show_objects_mossmann_ros.cpp)
-target_link_libraries(show_objects_mossmann_ros
+add_executable(show_objects_moosmann_ros show_objects_moosmann_ros.cpp)
+target_link_libraries(show_objects_moosmann_ros
                       ros_vis
                       identifiable
                       velodyne_utils
