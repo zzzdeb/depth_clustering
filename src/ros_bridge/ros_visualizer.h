@@ -12,6 +12,7 @@
 
 #include <utility>
 #include <vector>
+#include <string>
 
 namespace depth_clustering
 {
@@ -40,14 +41,15 @@ private:
   mutable std::mutex _cluster_mutex;
 };
 
-class RosVisualizer : public Visualizer
+class RosVisualizer : public AbstractClient<Cloud>,
+                      public IUpdateListener
 {
 
   typedef pcl::PointXYZL PointT;
   typedef pcl::PointCloud<PointT> PointCloudT;
 
 public:
-  explicit RosVisualizer(QWidget *parent = 0);
+  explicit RosVisualizer();
   virtual ~RosVisualizer();
 
   void initNode(ros::NodeHandle &nh);
@@ -58,11 +60,14 @@ public:
   ObjectPtrStorer *object_clouds_client() { return &_cloud_obj_storer; }
   LabelClient *label_client() { return &label_client_; }
 
+  void set_frame_id(const std::string &frame_id) { frame_id_ = frame_id; }
+
 protected:
-  void draw() override;
-  void init() override;
+  void draw();
+  // void init();
   void fromCloudToPCL(PointCloudT::Ptr pcl_cloud, const Cloud &cloud);
   void LabelPCL(PointCloudT::Ptr pcl_cloud);
+
 private:
   void PubCloud(const PointCloudT &cloud);
   void PubCubes(const std::vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> &cent_exts);
@@ -74,6 +79,8 @@ private:
   PointCloudT::Ptr pcl_cloud_;
   Cloud _cloud;
   mutable std::mutex _cloud_mutex;
+
+  std::string frame_id_;
 
 protected:
   ros::NodeHandle nh_;

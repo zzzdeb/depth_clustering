@@ -38,11 +38,9 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud)
 {
     // label cloud from image labels
     vector<vector<int>> labels(0);
-    ROS_INFO("labelpcl thread %i", std::this_thread::get_id());
     cv::Mat a = label_client_.label_image();
     for (int row = 0; row < label_client_.label_image().rows; ++row)
     {
-        ROS_INFO("labelpcl thread %i", std::this_thread::get_id());
         for (int col = 0; col < label_client_.label_image().cols; ++col)
         {
             const auto &point_container = _cloud.projection_ptr()->at(row, col);
@@ -190,16 +188,16 @@ void RosVisualizer::onUpdate()
 
 cv::Mat LabelClient::label_image() const
 {
-    lock_guard<mutex> guard(_shared_cluster_mutex);
+    lock_guard<mutex> guard(_cluster_mutex);
     return label_image_;
 }
 
 void LabelClient::OnNewObjectReceived(
     const cv::Mat &label_image, const int id)
 {
-    lock_guard<mutex> guard(_shared_cluster_mutex);
-    ROS_INFO("label_onor thread %i", std::this_thread::get_id());
+    std::unique_lock<mutex> locker(_cluster_mutex);
     label_image_ = label_image;
+    locker.unlock();
 
     if (_update_listener)
     {
