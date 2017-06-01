@@ -37,6 +37,9 @@
         "core": "cpp",
         "codecvt": "cpp",
         "condition_variable": "cpp",
-        "memory": "cpp"
-    }
+        "memory": "cpp",
+        "vector": "cpp"
+    },
+    "C_Cpp.clang_format_path": "/home/upns/zzz/software/clang4/bin/clang-format",
+    "editor.formatOnType": true
 }

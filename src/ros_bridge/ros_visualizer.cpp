@@ -196,7 +196,7 @@ void LabelClient::OnNewObjectReceived(
     const cv::Mat &label_image, const int id)
 {
     std::unique_lock<mutex> locker(_cluster_mutex);
-    label_image_ = label_image;
+    this->label_image_ = label_image;
     locker.unlock();
 
     if (_update_listener)
