@@ -1,5 +1,7 @@
 #include "./ros_visualizer.h"
 
+#include <cv_bridge/cv_bridge.h>
+
 namespace depth_clustering
 {
 
@@ -32,6 +34,7 @@ void RosVisualizer::initNode(ros::NodeHandle &nh)
     nh_ = nh;
     cloud_pub = nh_.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
     marker_pub = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 0);
+    image_pub = nh_.advertise<sensor_msgs::Image>("depth_image", 1);
 }
 
 void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud)
@@ -80,6 +83,7 @@ void RosVisualizer::draw()
     lock_guard<mutex> guard(_cloud_mutex);
     LabelPCL(pcl_cloud_);
     PubCloud(*pcl_cloud_);
+    PubImage(label_client_.label_image());
     for (const auto &kv : _cloud_obj_storer.object_clouds())
     {
         const auto &cluster = kv.second;
@@ -125,6 +129,12 @@ void RosVisualizer::PubCloud(const PointCloudT &pcl_cloud)
     cloud2.header.stamp = ros::Time::now();
     cloud2.header.frame_id = frame_id_;
     cloud_pub.publish(cloud2);
+}
+
+void RosVisualizer::PubImage(const cv::Mat &image)
+{
+    cv_bridge::CvImagePtr cv_ptr;
+    image_pub.publish(cv_ptr->toImageMsg());
 }
 
 void RosVisualizer::PubCubes(const vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> &cent_exts)

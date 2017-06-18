@@ -4,6 +4,7 @@
 #include "visualization/visualizer.h"
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Image.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -71,6 +72,7 @@ protected:
 private:
   void PubCloud(const PointCloudT &cloud);
   void PubCubes(const std::vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> &cent_exts);
+  void PubImage(const cv::Mat &image);
 
   bool _updated;
   ObjectPtrStorer _cloud_obj_storer;
@@ -84,7 +86,7 @@ private:
 
 protected:
   ros::NodeHandle nh_;
-  ros::Publisher cloud_pub, marker_pub;
+  ros::Publisher cloud_pub, marker_pub, image_pub;
 };
 
 } // namespace depth_clustering
