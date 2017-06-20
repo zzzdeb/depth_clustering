@@ -71,7 +71,7 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
     clusterer.SetLabelImageClient(visualizer->label_client());
 
     depth_ground_remover.AddClient(&clusterer);
-    // clusterer.AddClient(visualizer->object_clouds_client());
+    clusterer.AddClient(visualizer->object_clouds_client());
 
     for (const auto &path : image_reader.GetAllFilePaths())
     {   

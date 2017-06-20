@@ -157,7 +157,7 @@ unordered_map<uint16_t, Cloud> ObjectPtrStorer::object_clouds() const {
 
 void ObjectPtrStorer::OnNewObjectReceived(
     const unordered_map<uint16_t, Cloud>& clouds, const int id) {
-  lock_guard<mutex> guard(_cluster_mutex);
+  // lock_guard<mutex> guard(_cluster_mutex); !!!guard
   _obj_clouds = clouds;
   
   if (_update_listener) {

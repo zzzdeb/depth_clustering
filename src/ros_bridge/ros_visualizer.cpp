@@ -1,7 +1,5 @@
 #include "./ros_visualizer.h"
 
-#include <cv_bridge/cv_bridge.h>
-
 namespace depth_clustering
 {
 
@@ -24,27 +22,28 @@ typedef pcl::PointCloud<PointT> PointCloudT;
 RosVisualizer::RosVisualizer()
 {
     _cloud_obj_storer.SetUpdateListener(this);
-    label_client_.SetUpdateListener(this);
-    pcl_cloud_ = PointCloudT().makeShared();
+    _label_client.SetUpdateListener(this);
+    _pcl_cloud = PointCloudT().makeShared();
 }
 RosVisualizer::~RosVisualizer() {}
 
 void RosVisualizer::initNode(ros::NodeHandle &nh)
 {
-    nh_ = nh;
-    cloud_pub = nh_.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
-    marker_pub = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 0);
-    image_pub = nh_.advertise<sensor_msgs::Image>("depth_image", 1);
+    _nh = nh;
+    _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
+    _marker_pub = _nh.advertise<visualization_msgs::MarkerArray>("segmented_objects", 0);
+
+    _label_client.initNode(nh);
 }
 
 void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud)
 {
     // label cloud from image labels
     vector<vector<int>> labels(0);
-    cv::Mat a = label_client_.label_image();
-    for (int row = 0; row < label_client_.label_image().rows; ++row)
+    cv::Mat a = _label_client.label_image();
+    for (int row = 0; row < _label_client.label_image().rows; ++row)
     {
-        for (int col = 0; col < label_client_.label_image().cols; ++col)
+        for (int col = 0; col < _label_client.label_image().cols; ++col)
         {
             const auto &point_container = _cloud.projection_ptr()->at(row, col);
             if (point_container.IsEmpty())
@@ -52,7 +51,7 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud)
                 // this is ok, just continue, nothing interesting here, no points.
                 continue;
             }
-            uint16_t label = label_client_.label_image().at<uint16_t>(row, col);
+            uint16_t label = _label_client.label_image().at<uint16_t>(row, col);
             if (label < 1)
             {
                 // this is a default label, skip
@@ -72,19 +71,31 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud)
         if (labels[i].size() > 20 && labels[i].size() < 50000)
         {
             for (auto ind : labels[i])
-                pcl_cloud_->at(ind).label = i;
+                _pcl_cloud->at(ind).label = i;
         }
 }
 
 void RosVisualizer::draw()
 {
-    vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> cent_exts;
-
     lock_guard<mutex> guard(_cloud_mutex);
-    LabelPCL(pcl_cloud_);
-    PubCloud(*pcl_cloud_);
-    PubImage(label_client_.label_image());
-    for (const auto &kv : _cloud_obj_storer.object_clouds())
+    LabelPCL(_pcl_cloud);
+    PubCloud(*_pcl_cloud);
+    PubMarkers(_cloud_obj_storer.object_clouds());
+}
+
+void RosVisualizer::PubCloud(const PointCloudT &pcl_cloud)
+{
+    sensor_msgs::PointCloud2 cloud2;
+    pcl::toROSMsg(pcl_cloud, cloud2);
+    cloud2.header.stamp = ros::Time::now();
+    cloud2.header.frame_id = _frame_id;
+    _cloud_pub.publish(cloud2);
+}
+
+void RosVisualizer::PubMarkers(const unordered_map<uint16_t, Cloud>& object_clouds)
+{
+    vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> cent_exts;
+    for (const auto &kv : object_clouds)
     {
         const auto &cluster = kv.second;
         Eigen::Vector3f center = Eigen::Vector3f::Zero();
@@ -112,42 +123,18 @@ void RosVisualizer::draw()
         }
         cent_exts.push_back(std::make_pair(center, extent));
     }
-    // PubCubes(cent_exts);
-}
 
-// void RosVisualizer::init()
-// {
-//     // setSceneRadius(100.0);
-//     // camera()->showEntireScene();
-//     // glDisable(GL_LIGHTING);
-// }
-
-void RosVisualizer::PubCloud(const PointCloudT &pcl_cloud)
-{
-    sensor_msgs::PointCloud2 cloud2;
-    pcl::toROSMsg(pcl_cloud, cloud2);
-    cloud2.header.stamp = ros::Time::now();
-    cloud2.header.frame_id = frame_id_;
-    cloud_pub.publish(cloud2);
-}
-
-void RosVisualizer::PubImage(const cv::Mat &image)
-{
-    cv_bridge::CvImagePtr cv_ptr;
-    image_pub.publish(cv_ptr->toImageMsg());
-}
-
-void RosVisualizer::PubCubes(const vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> &cent_exts)
-{
     visualization_msgs::MarkerArray markers;
+    int id = 0;
+    ros::Time stamp = ros::Time::now();
     for (const auto cent_ext : cent_exts)
     {
         visualization_msgs::Marker marker;
-        marker.header.frame_id = frame_id_;
-        marker.header.stamp = ros::Time();
-        marker.ns = "my_namespace";
-        marker.id = 0;
-        marker.type = visualization_msgs::Marker::SPHERE;
+        marker.header.frame_id = _frame_id;
+        marker.header.stamp = stamp;
+        marker.ns = _frame_id;
+        marker.id = id++;
+        marker.type = visualization_msgs::Marker::CUBE;
         marker.action = visualization_msgs::Marker::ADD;
         marker.pose.position.x = cent_ext.first.x();
         marker.pose.position.y = cent_ext.first.y();
@@ -159,15 +146,15 @@ void RosVisualizer::PubCubes(const vector<std::pair<Eigen::Vector3f, Eigen::Vect
         marker.scale.x = cent_ext.second.x();
         marker.scale.y = cent_ext.second.y();
         marker.scale.z = cent_ext.second.z();
-        marker.color.a = 1.0; // Don't forget to set the alpha!
+        marker.color.a = 0.3; // Don't forget to set the alpha!
         marker.color.r = 0.0;
-        marker.color.g = 1.0;
-        marker.color.b = 0.0;
+        marker.color.g = static_cast<float>(id)/cent_exts.size(); // jede objekt hat eigene Farbe
+        marker.color.b = 1-marker.color.g;
         //only if using a MESH_RESOURCE marker type:
-        marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+        // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
         markers.markers.push_back(marker);
     }
-    marker_pub.publish(markers);
+    _marker_pub.publish(markers);
 }
 
 void RosVisualizer::fromCloudToPCL(PointCloudT::Ptr pcl_cloud, const Cloud &cloud)
@@ -188,7 +175,7 @@ void RosVisualizer::OnNewObjectReceived(const Cloud &cloud, const int id)
 {
     lock_guard<mutex> guard(_cloud_mutex);
     _cloud = cloud;
-    fromCloudToPCL(pcl_cloud_, cloud);
+    fromCloudToPCL(_pcl_cloud, cloud);
 }
 
 void RosVisualizer::onUpdate()
@@ -199,20 +186,43 @@ void RosVisualizer::onUpdate()
 cv::Mat LabelClient::label_image() const
 {
     lock_guard<mutex> guard(_cluster_mutex);
-    return label_image_;
+    return _label_image;
 }
 
 void LabelClient::OnNewObjectReceived(
     const cv::Mat &label_image, const int id)
 {
     std::unique_lock<mutex> locker(_cluster_mutex);
-    this->label_image_ = label_image;
+    this->_label_image = label_image;
+
+    if (_nh_ptr)
+    {
+        this->PubImage();
+    }
     locker.unlock();
 
-    if (_update_listener)
-    {
-        _update_listener->onUpdate();
-    }
+    // if (_update_listener)
+    // {
+    //     _update_listener->onUpdate();
+    //     // _update_listener->
+    // }
 }
 
+void LabelClient::PubImage()
+{
+    cv_bridge::CvImage img_bridge;
+    sensor_msgs::Image ros_image;
+    std_msgs::Header header;
+    // header.seq = counter; // user defined counter
+    header.stamp = ros::Time::now();
+
+    img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO16, _label_image);
+    img_bridge.toImageMsg(ros_image);
+    _image_pub.publish(ros_image);
+}
+void LabelClient::initNode(ros::NodeHandle& nh)
+{    
+    _nh_ptr = &nh;
+    _image_pub = _nh_ptr->advertise<sensor_msgs::Image>("depth_image", 1);
+}
 } //namespace depth_clustering
