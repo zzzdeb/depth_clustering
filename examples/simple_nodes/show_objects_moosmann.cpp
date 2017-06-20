@@ -34,6 +34,8 @@
 
 #include "tclap/CmdLine.h"
 
+#include <ros/ros.h>
+
 using std::string;
 using std::to_string;
 
@@ -88,6 +90,7 @@ void ReadData(const Radians& angle_tollerance, const string& in_path,
 }
 
 int main(int argc, char* argv[]) {
+    ros::init(argc, argv, "dealing");
   TCLAP::CmdLine cmd(
       "Loads clouds from Frank Moosmann's data and clusters each of them.", ' ',
       "1.0");

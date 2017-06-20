@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="play" name="player" args="/home/upns/zzz/ba_ws/data/bags/2017-02-06-17-39-02.bag --clock -l">
+    </node>
+    
+    <node name ="my_laser_to_cloud" pkg="laser_to_cloud" type="laser_to_cloud">
+        <remap from="my_laser_to_cloud/scan" to="/front/scan"/>
+        <remap from="my_laser_to_cloud/laser_to_cloud" to="/front/scan/cloud"/>
+    </node>
+
+</launch>
