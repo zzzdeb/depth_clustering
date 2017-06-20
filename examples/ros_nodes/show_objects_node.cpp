@@ -39,7 +39,7 @@ using ClustererT = ImageBasedClusterer<LinearImageLabeler<>>;
 
 int main(int argc, char* argv[]) {
   TCLAP::CmdLine cmd(
-      "Subscribe to /velodyne_points topic and show clustering on the data.",
+      "Subscribe to /velodyne_points topic and show clustering on the data. ",
       ' ', "1.0");
   TCLAP::ValueArg<int> angle_arg(
       "", "angle",
