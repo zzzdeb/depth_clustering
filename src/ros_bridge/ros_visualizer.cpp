@@ -32,7 +32,6 @@ void RosVisualizer::initNode(ros::NodeHandle &nh)
     _nh = nh;
     _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
     _marker_pub = _nh.advertise<visualization_msgs::MarkerArray>("segmented_objects", 0);
-
     _label_client.initNode(nh);
 }
 

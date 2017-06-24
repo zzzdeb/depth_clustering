@@ -28,6 +28,7 @@ target_link_libraries(show_objects_node_ros
 add_executable(show_objects_moosmann_ros show_objects_moosmann_ros.cpp)
 target_link_libraries(show_objects_moosmann_ros
                       ros_vis
+                      objects_publisher
                       identifiable
                       velodyne_utils
                       ros_bridge

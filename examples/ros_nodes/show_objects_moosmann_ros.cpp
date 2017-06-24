@@ -32,6 +32,7 @@
 #include "utils/velodyne_utils.h"
 #include "ros_bridge/ros_visualizer.h"
 #include "ros/ros.h"
+#include "ros_bridge/objects_publisher.h"
 
 #include "tclap/CmdLine.h"
 
@@ -43,7 +44,8 @@ using std::to_string;
 using namespace depth_clustering;
 
 void ReadData(const Radians &angle_tollerance, const string &in_path,
-              RosVisualizer *visualizer)
+              RosVisualizer *visualizer,
+              ObjectsPublisher *objects_publisher)
 {
     // delay reading for one second to allow GUI to load
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -71,7 +73,7 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
     clusterer.SetLabelImageClient(visualizer->label_client());
 
     depth_ground_remover.AddClient(&clusterer);
-    clusterer.AddClient(visualizer->object_clouds_client());
+    clusterer.AddClient(objects_publisher);
 
     for (const auto &path : image_reader.GetAllFilePaths())
     {   
@@ -118,15 +120,18 @@ int main(int argc, char *argv[])
     fprintf(stderr, "INFO: Reading from: %s \n", in_path.c_str());
 
     // QApplication application(argc, argv);
-    ros::NodeHandle nh;
+    ros::NodeHandle nh_p;// !!!must be private
     // visualizer should be created from a gui thread
     RosVisualizer visualizer;
-    visualizer.initNode(nh);
+    visualizer.initNode(nh_p);
     visualizer.set_frame_id("world");
+
+    bool use_mbb = true; //!!! from parameter
+    ObjectsPublisher objects_publisher(nh_p, use_mbb);
     // visualizer.show();
 
     // create and run loader thread
-    std::thread loader_thread(ReadData, angle_tollerance, in_path, &visualizer);
+    std::thread loader_thread(ReadData, angle_tollerance, in_path, &visualizer, &objects_publisher);
 
     // ros::AsyncSpinner spinner(1);
     // spinner.start();

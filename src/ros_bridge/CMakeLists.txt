@@ -6,6 +6,20 @@ target_link_libraries(ros_bridge
                       ${catkin_LIBRARIES}
                       ${PCL_LIBRARIES})
 
+
+find_package(PCL 1.7 REQUIRED)
+
+add_library(objects_publisher SHARED objects_publisher.cpp)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+target_link_libraries(objects_publisher
+                      identifiable
+                      ${catkin_LIBRARIES}
+                      ${PCL_LIBRARIES})
+
+
 add_library(ros_vis SHARED ros_visualizer.cpp)                              
 
 find_package(catkin REQUIRED COMPONENTS
@@ -19,6 +33,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(ros_vis
                       identifiable
                       visualization
+                      objects_publisher
                       ${OpenCV_LIBRARIES}
                       ${catkin_LIBRARIES}
                     #   ${catkin_REQUIRED}
