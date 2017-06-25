@@ -34,6 +34,12 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "*.ipp": "cpp",
-        "core": "cpp"
-    }
+        "core": "cpp",
+        "codecvt": "cpp",
+        "condition_variable": "cpp",
+        "memory": "cpp",
+        "vector": "cpp"
+    },
+    "C_Cpp.clang_format_path": "/home/upns/zzz/software/clang4/bin/clang-format",
+    "editor.formatOnType": true
 }
