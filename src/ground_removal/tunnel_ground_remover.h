@@ -29,6 +29,14 @@
 #include <pcl/point_cloud.h>
 #include <pcl/features/moment_of_inertia_estimation.h>
 
+#include <ros/ros.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+#include "./depth_ground_remover.h"
+
 namespace depth_clustering {
 
 typedef pcl::PointXYZL PointT;
@@ -50,15 +58,21 @@ class TunnelGroundRemover : public AbstractClient<Cloud>,
  public:
   explicit TunnelGroundRemover(const ProjectionParams& params,
                               const double& height,
+                              ros::NodeHandle& nh,
                               int window_size = 5,
-                              bool use_mbb = true)
+                              bool use_mbb = true
+                              )
       : ClientT{},
         SenderT{SenderType::STREAMER},
         _params{params},
         _window_size{window_size},
         _use_mbb{use_mbb},
-        _height{height}
-        {}
+        _height{height},
+        _nh{nh}
+        {
+    _marker_pub = _nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1);
+    _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("bodenentfernung", 1);
+  }
   virtual ~TunnelGroundRemover() {}
 
   /**
@@ -71,14 +85,16 @@ class TunnelGroundRemover : public AbstractClient<Cloud>,
    */
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override;
 
-  void RemoveGroundOBB(const PointCloudT::Ptr& cloud_p);
-  void RemoveGroundAABB(const PointCloudT::Ptr& cloud_p);
+  void RemoveGroundOBB(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
+  void RemoveGroundAABB(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
 
 
  protected:
 
  //!!! add smoother
-  
+  ros::NodeHandle _nh;
+  ros::Publisher _marker_pub, _cloud_pub;
+
   ProjectionParams _params;
   int _window_size = 5;
   Radians _ground_remove_angle = 5_deg;

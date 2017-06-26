@@ -45,17 +45,20 @@ void ObjectsPublisher::MinBB(const pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_pt
 
   pcl::MomentOfInertiaEstimation <pcl::PointXYZL> feature_extractor; 
   feature_extractor.setInputCloud (cloud_ptr);
-  feature_extractor.compute (); //!!! is it necessarily to compute all feateres? computeOBB is private create yourown for computeOBB.
+  feature_extractor.setAngleStep(30);
+  feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
+                                //!computeOBB is private create yourown for
+                                //!computeOBB.
   feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
-  
+  float factor = 1.5;
   geometry_msgs::Vector3 scale;
-  scale.x = min_point_OBB.x; scale.y = min_point_OBB.y; scale.z = min_point_OBB.z;
+  scale.x = min_point_OBB.x*factor; scale.y = min_point_OBB.y*factor; scale.z = min_point_OBB.z*factor;
   geometry_msgs::Pose pose;
   pose.position.x = position_OBB.x; pose.position.y = position_OBB.y; pose.position.z = position_OBB.z;
   
   Eigen::Quaternionf q(rotational_matrix_OBB);
   pose.orientation.x = q.x(); pose.orientation.y = q.y(); pose.orientation.z = q.z(); pose.orientation.w = q.w();
-  transformation = make_pair(pose, scale);
+  transformation = make_pair(pose, scale);//!!!
 }
 
 void ObjectsPublisher::AxisAlignedBB(const Cloud& cloud,
@@ -136,8 +139,10 @@ void ObjectsPublisher::PublishObjects(const vector<pair<geometry_msgs::Pose, geo
         marker.color.r = 0.0;
         marker.color.g = static_cast<float>(id)/objects.size(); // !!!changeable color
         marker.color.b = 1-marker.color.g;
-        //only if using a MESH_RESOURCE marker type:
-        // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+        marker.lifetime = ros::Duration(0.5); //!!!
+        // only if using a MESH_RESOURCE marker type:
+        // marker.mesh_resource =
+        // "package://pr2_description/meshes/base_v0/base.dae";
         obj_markers.markers.push_back(marker);
   }
   _objects_pub.publish(obj_markers);

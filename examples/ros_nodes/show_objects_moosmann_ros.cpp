@@ -32,7 +32,9 @@
 #include "utils/velodyne_utils.h"
 #include "ros_bridge/ros_visualizer.h"
 #include "ros/ros.h"
+
 #include "ros_bridge/objects_publisher.h"
+#include "ground_removal/tunnel_ground_remover.h"
 
 #include "tclap/CmdLine.h"
 
@@ -45,7 +47,8 @@ using namespace depth_clustering;
 
 void ReadData(const Radians &angle_tollerance, const string &in_path,
               RosVisualizer *visualizer,
-              ObjectsPublisher *objects_publisher)
+              ObjectsPublisher *objects_publisher, 
+              ros::NodeHandle* nh)
 {
     // delay reading for one second to allow GUI to load
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -67,12 +70,15 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
     auto depth_ground_remover = DepthGroundRemover(
         *proj_params_ptr, ground_remove_angle, smooth_window_size);
 
+    auto tunnel_ground_remover = TunnelGroundRemover(*proj_params_ptr, 5, *nh);
+
     ImageBasedClusterer<LinearImageLabeler<>> clusterer(
         angle_tollerance, min_cluster_size, max_cluster_size);
     clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
     clusterer.SetLabelImageClient(visualizer->label_client());
 
     depth_ground_remover.AddClient(&clusterer);
+    // tunnel_ground_remover.AddClient(&clusterer);
     clusterer.AddClient(objects_publisher);
 
     for (const auto &path : image_reader.GetAllFilePaths())
@@ -84,6 +90,7 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
         time_utils::Timer timer;
         visualizer->OnNewObjectReceived(*cloud_ptr, 0);
         depth_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
+        // tunnel_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
         auto current_millis = timer.measure(time_utils::Timer::Units::Milli);
         fprintf(stderr, "INFO: It took %lu ms to process and show everything.\n",
                 current_millis);
@@ -131,7 +138,7 @@ int main(int argc, char *argv[])
     // visualizer.show();
 
     // create and run loader thread
-    std::thread loader_thread(ReadData, angle_tollerance, in_path, &visualizer, &objects_publisher);
+    std::thread loader_thread(ReadData, angle_tollerance, in_path, &visualizer, &objects_publisher, &nh_p);
 
     // ros::AsyncSpinner spinner(1);
     // spinner.start();

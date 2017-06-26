@@ -200,11 +200,11 @@ void LabelClient::OnNewObjectReceived(
     }
     locker.unlock();
 
-    // if (_update_listener)
-    // {
-    //     _update_listener->onUpdate();
-    //     // _update_listener->
-    // }
+    if (_update_listener)
+    {
+        _update_listener->onUpdate();
+        // _update_listener->
+    }
 }
 
 void LabelClient::PubImage()

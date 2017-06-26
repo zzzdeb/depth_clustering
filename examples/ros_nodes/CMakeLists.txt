@@ -35,6 +35,7 @@ target_link_libraries(show_objects_moosmann_ros
                       image_labeler
                       projections
                       ground_remove
+                      tunnel_ground_removal
                       visualization
                       folder_reader
                       ${MY_QT_LIBRARIES}

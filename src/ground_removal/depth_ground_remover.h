@@ -62,7 +62,7 @@ class DepthGroundRemover : public AbstractClient<Cloud>,
    */
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override;
 
- protected:
+
   /**
    * @brief      Zero out all pixels that belong to ground
    *
@@ -131,7 +131,7 @@ class DepthGroundRemover : public AbstractClient<Cloud>,
                       float depth_threshold);
 
   cv::Mat RepairDepth(const cv::Mat& depth_image);
-
+ protected: //!!! no function?
   ProjectionParams _params;
   int _window_size = 5;
   Radians _ground_remove_angle = 5_deg;
