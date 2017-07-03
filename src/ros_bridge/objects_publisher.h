@@ -36,6 +36,8 @@
 #include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/point_cloud.h>
 
+#include <opencv2/imgproc.hpp>
+
 // #include <Eigen/Geometry> 
 
 namespace depth_clustering
@@ -53,8 +55,13 @@ public:
                            const int id) override;
   
   virtual ~ObjectsPublisher() {}
+
   void MinBB(const pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_ptr,
             std::pair<geometry_msgs::Pose, geometry_msgs::Vector3>& transfromation);
+
+  void MinRecArea(const pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_ptr,
+            std::pair<geometry_msgs::Pose, geometry_msgs::Vector3>& transfromation);
+
   void AxisAlignedBB(const Cloud& cloud,
             std::pair<geometry_msgs::Pose, geometry_msgs::Vector3>& transfromation);
 

@@ -40,6 +40,6 @@
         "memory": "cpp",
         "vector": "cpp"
     },
-    "C_Cpp.clang_format_path": "/home/upns/zzz/software/clang4/bin/clang-format",
+    "C_Cpp.clang_format_path": "/home/upns/zzz/algorithms/src/depth_clustering/.clang-format",
     "editor.formatOnType": true
 }

@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     visualizer.initNode(nh_p);
     visualizer.set_frame_id("world");
 
-    bool use_mbb = true; //!!! from parameter
+    bool use_mbb = false; //!!! from parameter
     ObjectsPublisher objects_publisher(nh_p, use_mbb);
     // visualizer.show();
 
