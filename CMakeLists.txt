@@ -62,39 +62,38 @@ find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem regex program_options)
 find_package(PCL QUIET COMPONENTS common io)
-find_package(QGLViewer REQUIRED)
 
-# find correct qt version
-if(${DISTRO} MATCHES "14.04")
-  find_package(Qt4 REQUIRED COMPONENTS QtCore QtXml QtOpenGL QtGui)
-  include_directories(${QT_INCLUDES})
-  set(MY_QT_LIBRARIES
-      Qt4::QtCore
-      Qt4::QtXml
-      Qt4::QtOpenGL
-      Qt4::QtGui)
-elseif(${DISTRO} MATCHES "16.04")
-  find_package(Qt5 REQUIRED COMPONENTS Core Xml OpenGL Gui Widgets)
-  include_directories(${Qt5Core_INCLUDE_DIRS}
-                      ${Qt5Xml_INCLUDE_DIRS}
-                      ${Qt5Gui_INCLUDE_DIRS}
-                      ${Qt5Widgets_INCLUDE_DIRS}
-                      ${Qt5OpenGL_INCLUDE_DIRS})
-  set(MY_QT_LIBRARIES
-      ${Qt5Widgets_LIBRARIES}
-      ${Qt5Core_LIBRARIES}
-      ${Qt5Gui_LIBRARIES}
-      ${Qt5Xml_LIBRARIES}
-      ${Qt5OpenGL_LIBRARIES})
-endif()
+# # find correct qt version
+# if(${DISTRO} MATCHES "14.04")
+#   find_package(Qt4 REQUIRED COMPONENTS QtCore QtXml QtOpenGL QtGui)
+#   include_directories(${QT_INCLUDES})
+#   set(MY_QT_LIBRARIES
+#       Qt4::QtCore
+#       Qt4::QtXml
+#       Qt4::QtOpenGL
+#       Qt4::QtGui)
+# elseif(${DISTRO} MATCHES "16.04")
+#   find_package(Qt5 REQUIRED COMPONENTS Core Xml OpenGL Gui Widgets)
+#   include_directories(${Qt5Core_INCLUDE_DIRS}
+#                       ${Qt5Xml_INCLUDE_DIRS}
+#                       ${Qt5Gui_INCLUDE_DIRS}
+#                       ${Qt5Widgets_INCLUDE_DIRS}
+#                       ${Qt5OpenGL_INCLUDE_DIRS})
+#   set(MY_QT_LIBRARIES
+#       ${Qt5Widgets_LIBRARIES}
+#       ${Qt5Core_LIBRARIES}
+#       ${Qt5Gui_LIBRARIES}
+#       ${Qt5Xml_LIBRARIES}
+#       ${Qt5OpenGL_LIBRARIES})
+# endif() !!!del
 
 # some status messages
-message(STATUS "Linking against Qt libs: ${MY_QT_LIBRARIES}")
-message(STATUS "Linking against QGlViewer lib: ${QGLVIEWER_LIBRARY}")
+# message(STATUS "Linking against Qt libs: ${MY_QT_LIBRARIES}")
+# message(STATUS "Linking against QGlViewer lib: ${QGLVIEWER_LIBRARY}") !!! del
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
+## is used, also find other catkin packages  !!! del
 find_package(catkin QUIET COMPONENTS
   roscpp
   sensor_msgs
@@ -146,7 +145,6 @@ catkin_package(
       ros_bridge
       velodyne_utils
       folder_reader
-      visualization
  CATKIN_DEPENDS roscpp sensor_msgs std_msgs nav_msgs message_filters tf
 )
 
@@ -161,7 +159,6 @@ include_directories(
 )
 
 add_subdirectory(src)
-add_subdirectory(examples)
 
 message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
 if (${BUILD_TESTING})

@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 namespace fs = boost::filesystem;
@@ -58,11 +60,11 @@ FolderReader::FolderReader(const string& folder_path,
     : _path_counter(0) {
   fs::path folder(folder_path);
   if (!fs::exists(folder)) {
-    fprintf(stderr, "ERROR: no such folder: %s\n", folder_path.c_str());
+    ROS_ERROR("no such folder: %s\n", folder_path.c_str());
     return;
   }
   if (fs::is_directory(folder)) {
-    fprintf(stderr, "INFO: Getting file paths from folder: %s\n",
+    ROS_INFO("Getting file paths from folder: %s\n",
             folder_path.c_str());
     auto range = boost::iterator_range<fs::directory_iterator>(
         fs::directory_iterator(folder), fs::directory_iterator());
@@ -77,7 +79,7 @@ FolderReader::FolderReader(const string& folder_path,
     if (order == Order::SORTED) {
       std::sort(_all_paths.begin(), _all_paths.end(), numeric_string_compare);
     }
-    fprintf(stderr, "INFO: There are %lu '%s' files in the folder.\n",
+    ROS_INFO("There are %lu '%s' files in the folder.\n",
             _all_paths.size(), ending_with.c_str());
   }
 }

@@ -26,6 +26,8 @@
 #include "utils/timer.h"
 #include "utils/velodyne_utils.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 using cv::Mat;
@@ -55,7 +57,7 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
     RemoveGroundAABB(pcl_cloud_p, gl_pcl_p);
 
   uint64_t end = total_timer.measure();
-  fprintf(stderr, "INFO: Tunnel Ground removed in %lu us\n", end);
+  ROS_INFO("Tunnel Ground removed in %lu us\n", end);
 
   Cloud::Ptr groundless_cloud_p = cloud.FromPcl(gl_pcl_p);
   groundless_cloud_p->InitProjection(_params);
@@ -75,11 +77,11 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   if (end > 2000000)  //!!! must be provided
   {
     _use_mbb = false;
-    fprintf(stderr, "INFO: ground_removal set to without MinBB");
+    ROS_INFO("ground_removal set to without MinBB");
   } else if (end < 1500000)  //!!! must be provided
   {
     _use_mbb = true;
-    fprintf(stderr, "INFO: ground_removal set to use MinBB");
+    ROS_INFO("ground_removal set to use MinBB");
   }
 
   this->ShareDataWithAllClients(cloud_copy);
@@ -98,7 +100,7 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
   feature_extractor.setInputCloud(cloud_p);
   Timer timer;
   feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
-  fprintf(stderr, "INFO: computing MBB took %lu us \n", timer.measure());
+  ROS_INFO("computing MBB took %lu us \n", timer.measure());
   feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
                            rotational_matrix_OBB);
 

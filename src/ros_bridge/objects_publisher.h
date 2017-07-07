@@ -17,9 +17,7 @@
 #define SRC_OBJECTS_PUBLISHER_
 
 #include <map>
-#include <mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -48,8 +46,8 @@ class ObjectsPublisher
 {
 public:
   ObjectsPublisher() : AbstractClient<std::unordered_map<uint16_t, Cloud>>(), 
-                      _use_mbb{true} { }
-  ObjectsPublisher(ros::NodeHandle& nh, bool _use_mbb);
+                      _use_abb{true} { }
+  ObjectsPublisher(ros::NodeHandle& nh);
   
   void OnNewObjectReceived(const std::unordered_map<uint16_t, Cloud> &clouds,
                            const int id) override;
@@ -67,9 +65,7 @@ public:
 
   void PublishObjects(const std::vector<std::pair<geometry_msgs::Pose, geometry_msgs::Vector3> >& object);
 
-  std::unordered_map<uint16_t, Cloud> object_clouds() const;
-
-  void SetUseMBB(bool use_mbb) {_use_mbb = use_mbb;}
+  void SetUseABB(bool use_abb) {_use_abb = use_abb;}
 
 protected:
     ros::NodeHandle _nh;
@@ -77,10 +73,7 @@ protected:
     std::string _frame_id;
 
 private:
-  bool _use_mbb;
-  std::vector< std::pair<geometry_msgs::Pose, geometry_msgs::Vector3> > _objects;
-  std::unordered_map<uint16_t, Cloud> _obj_clouds;
-  mutable std::mutex _objects_mutex;
+  bool _use_abb;
 };
 
 } // namespace depth_clustering

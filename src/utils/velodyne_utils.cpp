@@ -28,6 +28,8 @@
 
 #include "utils/cloud.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 using std::string;
@@ -43,7 +45,7 @@ Cloud::Ptr ReadKittiCloudTxt(const string& path) {
     vector<string> coords_str;
     boost::split(coords_str, line, boost::is_any_of(" "));
     if (coords_str.size() != 4) {
-      fprintf(stderr, "ERROR: format of line is wrong.\n");
+      ROS_ERROR("format of line is wrong.\n");
       continue;
     }
     RichPoint point;

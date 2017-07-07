@@ -22,6 +22,5 @@ target_link_libraries(tunnel_ground_removal
                       velodyne_utils
                       difference
                       ${catkin_LIBRARIES}
-                       ${catkin_REQUIRED}
                       ${PCL_LIBRARIES}
                       ${OpenCV_LIBS})

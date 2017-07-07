@@ -16,7 +16,7 @@ Check out a video that shows all objects which have a bounding box of less than 
 ### Prerequisites ###
 - Catkin.
 - OpenCV: `sudo apt-get install libopencv-dev`
-- QGLViewer: `sudo apt-get install libqglviewer-dev`
+<!--- QGLViewer: `sudo apt-get install libqglviewer-dev`!!! del-->
 - Qt (4 or 5 depending on system):
     + **Ubuntu 14.04:** `sudo apt-get install libqt4-dev`
     + **Ubuntu 16.04:** `sudo apt-get install libqt5-dev`

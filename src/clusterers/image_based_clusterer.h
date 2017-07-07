@@ -36,6 +36,8 @@
 #include "image_labelers/linear_image_labeler.h"
 #include "projections/cloud_projection.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 /**
@@ -83,6 +85,16 @@ class ImageBasedClusterer : public AbstractClusterer {
   }
 
   /**
+   * @brief      Sets the cloud client.
+   *
+   * @param      client  The client to receive cloud label_image pair
+   */
+  void SetCloudClient(AbstractClient<std::pair<Cloud::Ptr, cv::Mat> >* client) {
+    this->_cloud_client = client;
+  }
+
+
+  /**
    * @brief      Gets called when clusterer receives a cloud to cluster
    *
    * @param[in]  cloud      The cloud to cluster
@@ -91,8 +103,8 @@ class ImageBasedClusterer : public AbstractClusterer {
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override {
     // generate a projection from a point cloud
     if (!cloud.projection_ptr()) {
-      fprintf(stderr, "ERROR: projection not initialized in cloud.\n");
-      fprintf(stderr, "INFO: cannot label this cloud.\n");
+      ROS_ERROR("projection not initialized in cloud.\n");
+      ROS_INFO("cannot label this cloud.\n");
       return;
     }
     time_utils::Timer timer;
@@ -100,7 +112,7 @@ class ImageBasedClusterer : public AbstractClusterer {
                            cloud.projection_ptr()->params(), _angle_tollerance);
     image_labeler.ComputeLabels(_diff_type);
     const cv::Mat* labels_ptr = image_labeler.GetLabelImage();
-    fprintf(stderr, "INFO: image based labeling took: %lu us\n",
+    ROS_INFO("image based labeling took: %lu us\n",
             timer.measure());
 
     // send image to whoever wants to get it
@@ -108,11 +120,12 @@ class ImageBasedClusterer : public AbstractClusterer {
       _label_client->OnNewObjectReceived(*labels_ptr, this->id());
     }
 
-    fprintf(stderr, "INFO: labels image sent to clients in: %lu us\n",
+    ROS_INFO("labels image sent to clients in: %lu us\n",
             timer.measure());
 
     // create 3d clusters from image labels
     std::unordered_map<uint16_t, Cloud> clusters;
+    
     for (int row = 0; row < labels_ptr->rows; ++row) {
       for (int col = 0; col < labels_ptr->cols; ++col) {
         const auto& point_container = cloud.projection_ptr()->at(row, col);
@@ -145,10 +158,14 @@ class ImageBasedClusterer : public AbstractClusterer {
       clusters.erase(label);
     }
 
-    fprintf(stderr, "INFO: prepared clusters in: %lu us\n", timer.measure());
-
+    ROS_INFO("prepared clusters in: %lu us\n", timer.measure());
     this->ShareDataWithAllClients(clusters);
-    fprintf(stderr, "INFO: clusters shared: %lu us\n", timer.measure());
+    ROS_INFO("clusters shared: %lu us\n", timer.measure());
+    if(_cloud_client)
+    {
+      auto foo = std::make_pair(make_shared<Cloud>(cloud),*labels_ptr);
+      _cloud_client->OnNewObjectReceived(foo, this->id());
+    }
   }
 
  private:
@@ -156,6 +173,7 @@ class ImageBasedClusterer : public AbstractClusterer {
   Radians _angle_tollerance;
 
   AbstractClient<cv::Mat>* _label_client;
+  AbstractClient<std::pair<Cloud::Ptr, cv::Mat>>* _cloud_client;
 
   DiffFactory::DiffType _diff_type = DiffFactory::DiffType::NONE;
 };

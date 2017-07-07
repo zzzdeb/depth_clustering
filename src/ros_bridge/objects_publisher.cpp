@@ -9,27 +9,31 @@ using visualization_msgs::MarkerArray;
 
 namespace depth_clustering {
 
-ObjectsPublisher::ObjectsPublisher(ros::NodeHandle& nh, bool use_mbb)
-    : _use_mbb{use_mbb} {
+ObjectsPublisher::ObjectsPublisher(ros::NodeHandle& nh)
+{
   ObjectsPublisher();
   _nh = nh;
   _objects_pub = _nh.advertise<MarkerArray>("segmented_objects", 1);
-  _frame_id = "world";  //!!! must be changed
+  
+  if(!nh.getParam("objects_publisher/frame_id", _frame_id)) 
+    ROS_ERROR("couldnt find objects_publisher/frame_id");
+
+  if (!nh.param("objects_publisher/use_axial_bounding_box", _use_abb, true))
+    ROS_INFO("couldnt find objects_publisher/use_axial_bounding_box, default: true");
 }
 
 void ObjectsPublisher::OnNewObjectReceived(
     const unordered_map<uint16_t, Cloud>& clouds, const int id) {
-  std::lock_guard<std::mutex> guard(_objects_mutex);
-  _objects.clear();
+  vector<pair<geometry_msgs::Pose, geometry_msgs::Vector3> > objects;
   for (const auto& cloud : clouds) {
     pair<geometry_msgs::Pose, geometry_msgs::Vector3> transformation;
-    if (_use_mbb)
+    if (_use_abb)
       MinRecArea(cloud.second.ToPcl(), transformation); //!!!
     else
       AxisAlignedBB(cloud.second, transformation);
-    _objects.push_back(transformation);
+    objects.push_back(transformation);
   }
-  PublishObjects(_objects);
+  PublishObjects(objects);
 }
 
 void ObjectsPublisher::MinBB(
@@ -141,29 +145,11 @@ void ObjectsPublisher::MinRecArea(
   pose.position.z = center.z();
 
   transformation = make_pair(pose, scale);
-
-  // pcl::PointXYZL min_point_AABB;
-  // pcl::PointXYZL max_point_AABB;
-  // Eigen::Vector3f position_AABB;
-
-  // pcl::MomentOfInertiaEstimation <pcl::PointXYZL> feature_extractor;
-  // feature_extractor.setInputCloud (cloud_ptr);
-  // feature_extractor.compute (); //!!! look up;
-  // feature_extractor.getAABB (min_point_AABB, max_point_AABB);
-  // feature_extractor.getMassCenter (position_AABB);
-
-  // geometry_msgs::Vector3 scale;
-  // scale.x = min_point_AABB.x; scale.y = min_point_AABB.y; scale.z =
-  // min_point_AABB.z;
-  // geometry_msgs::Pose pose;
-  // pose.position.x = position_AABB[0]; pose.position.y = position_AABB[1];
-  // pose.position.z = position_AABB[2];
-  // transformation = make_pair(pose, scale);
 }
 
 void ObjectsPublisher::PublishObjects(
     const vector<pair<geometry_msgs::Pose, geometry_msgs::Vector3> >& objects) {
-  visualization_msgs::MarkerArray obj_markers;  //!!! Type
+  visualization_msgs::MarkerArray obj_markers;
   visualization_msgs::Marker marker;
   int id = 0;
   ros::Time stamp = ros::Time::now();  //!!! is it really now?
@@ -179,7 +165,7 @@ void ObjectsPublisher::PublishObjects(
     marker.color.a = 0.3;  // Don't forget to set the alpha!
     marker.color.r = 0.0;
     marker.color.g =
-        static_cast<float>(id) / objects.size();  // !!!changeable color
+        static_cast<float>(id) / objects.size(); 
     marker.color.b = 1 - marker.color.g;
     marker.lifetime = ros::Duration(0.5);  //!!!
     // only if using a MESH_RESOURCE marker type:

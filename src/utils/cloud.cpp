@@ -15,6 +15,8 @@
 
 #include "utils/cloud.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 Cloud::Cloud(const Cloud& cloud)
@@ -66,7 +68,7 @@ void Cloud::InitProjection(const ProjectionParams& params) {
   }
   _projection = CloudProjection::Ptr(new SphericalProjection(params));
   if (!_projection) {
-    fprintf(stderr, "ERROR: failed to initalize projection.\n");
+    ROS_ERROR("failed to initalize projection.\n");
     return;
   }
   _projection = _projection->Clone();

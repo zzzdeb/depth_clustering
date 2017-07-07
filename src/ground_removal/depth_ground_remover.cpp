@@ -25,6 +25,8 @@
 #include "image_labelers/diff_helpers/simple_diff.h"
 #include "utils/timer.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 using cv::Mat;
@@ -51,7 +53,7 @@ void DepthGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   auto smoothed_image = ApplySavitskyGolaySmoothing(angle_image, _window_size);
   auto no_ground_image = ZeroOutGroundBFS(depth_image, smoothed_image,
                                           _ground_remove_angle, _window_size);
-  fprintf(stderr, "INFO: Ground removed in %lu us\n", total_timer.measure());
+  ROS_INFO("Ground removed in %lu us\n", total_timer.measure());
   cloud_copy.projection_ptr()->depth_image() = no_ground_image;
   this->ShareDataWithAllClients(cloud_copy);
   _counter++;
@@ -102,7 +104,7 @@ Mat DepthGroundRemover::ZeroOutGroundBFS(const cv::Mat& image,
   }
   auto label_image_ptr = image_labeler.GetLabelImage();
   if (label_image_ptr->rows != res.rows || label_image_ptr->cols != res.cols) {
-    fprintf(stderr, "ERROR: label image and res do not correspond.\n");
+    ROS_ERROR("label image and res do not correspond.\n");
     return res;
   }
   kernel_size = std::max(kernel_size - 2, 3);

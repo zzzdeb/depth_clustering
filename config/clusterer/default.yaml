@@ -1,0 +1,33 @@
+#Parameters for node
+#
+from_path: "/home/zzz/ros/algorithms/data/scenario1" # delete it if you dont run it from data
+
+node: {
+  fixed_frame: "world",
+  laser_frame: "",
+  cloud_frame_id: "",
+  topic_clouds: "",
+  num_thread: 1
+}
+ground_remover: {
+  remover: "depth_ground_remover",
+  angle: 7.0,
+  smooth_window_size: 5
+}
+clusterer: {
+  angle_tollerance: 10,
+  min_cluster_size: 20,
+  max_cluster_size: 100000
+}
+
+cloud_publisher: {
+  topic_name: "segmented_cloud"
+}
+
+objects_publisher: {
+  topic_name: "segmented_objects",
+  use_axial_bounding_box: false,
+  frame_id: "world"
+}
+
+

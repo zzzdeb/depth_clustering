@@ -31,6 +31,8 @@
 
 #include "clusterers/abstract_clusterer.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 using std::chrono::microseconds;
@@ -79,7 +81,7 @@ class EuclideanClusterer : public AbstractClusterer {
     clusterer.extract(cluster_indices);
 
     auto end = high_resolution_clock::now();
-    fprintf(stderr, "euclidian based labeling took: %lu us\n",
+    ROS_INFO("euclidian based labeling took: %lu us\n",
             std::chrono::duration_cast<microseconds>(end - start).count());
     for (auto cluster_iter = cluster_indices.begin();
          cluster_iter != cluster_indices.end(); ++cluster_iter) {

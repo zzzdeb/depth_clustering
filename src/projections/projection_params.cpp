@@ -25,6 +25,8 @@
 
 #include "utils/mem_utils.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering
 {
 
@@ -115,7 +117,7 @@ const Radians ProjectionParams::AngleFromRow(int row) const
   {
     return _row_angles[row];
   }
-  fprintf(stderr, "ERROR: row %d is wrong\n", row);
+  ROS_ERROR("row %d is wrong\n", row);
   return 0.0_deg;
 }
 
@@ -179,7 +181,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::VLP_16()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!\n");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -195,7 +197,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::HDL_32()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!\n");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -213,7 +215,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::HDL_64()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!\n");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -229,7 +231,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::IMR_LaserScanner()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!\n");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -245,7 +247,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::Husky_2d()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!\n");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -262,7 +264,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FullSphere(
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!\n");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -271,16 +273,16 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FullSphere(
 std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
     const std::string &path)
 {
-  fprintf(stderr, "INFO: Set en_US.UTF-8 locale.\n");
+  ROS_INFO("Set en_US.UTF-8 locale.\n");
   std::locale::global(std::locale("en_US.UTF-8"));
-  fprintf(stderr, "INFO: Reading config.\n");
+  ROS_INFO("Reading config.\n");
   ProjectionParams params;
   // we need to fill this thing. Parsing text files again. Is that what PhD in
   // Robotics is about?
   std::ifstream file(path.c_str());
   if (!file.is_open())
   {
-    fprintf(stderr, "ERROR: cannot open file: '%s'\n", path.c_str());
+    ROS_ERROR("cannot open file: '%s'\n", path.c_str());
     return nullptr;
   }
   for (std::string line; std::getline(file, line, '\n');)
@@ -288,7 +290,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
     if (starts_with(line, "#"))
     {
       // we have found a commentary
-      fprintf(stderr, "INFO: Skipping commentary: \n\t %s\n", line.c_str());
+      ROS_INFO("Skipping commentary: \n\t %s\n", line.c_str());
     }
     else
     {
@@ -297,7 +299,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
       boost::split(str_angles, line, boost::is_any_of(";"));
       if (str_angles.size() < 4)
       {
-        fprintf(stderr, "ERROR: format of line is wrong.\n");
+        ROS_ERROR("format of line is wrong.\n");
         return nullptr;
       }
       int cols = std::stoi(str_angles[0]);
@@ -330,7 +332,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
       }
       if (params._row_angles.size() != static_cast<size_t>(rows))
       {
-        fprintf(stderr, "ERROR: wrong config\n");
+        ROS_ERROR("wrong config\n");
         return nullptr;
       }
     }
@@ -340,10 +342,10 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
   // check validity
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: the config read was not valid.\n");
+    ROS_ERROR("the config read was not valid.\n");
     return nullptr;
   }
-  fprintf(stderr, "INFO: Params sucessfully read. Rows: %lu, Cols: %lu\n",
+  ROS_INFO("Params sucessfully read. Rows: %lu, Cols: %lu\n",
           params._row_angles.size(), params._col_angles.size());
   return mem_utils::make_unique<ProjectionParams>(params);
 }
