@@ -3,6 +3,7 @@ target_link_libraries(ground_remove
                       identifiable
                       velodyne_utils
                       difference
+                      savitsky_golay_smoothing
                       ${PCL_LIBRARIES}
                       ${OpenCV_LIBS})
 

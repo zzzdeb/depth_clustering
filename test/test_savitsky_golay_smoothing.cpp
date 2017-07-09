@@ -1,4 +1,3 @@
-// Copyright Igor Bogoslavskyi, year 2017.
 // In case of any problems with the code please contact me.
 // Email: igor.bogoslavskyi@uni-bonn.de.
 
@@ -6,34 +5,34 @@
 
 #include <limits>
 #include <string>
-#include "ground_removal/depth_ground_remover.h"
+#include "utils/savitsky_golay_smoothing.h"
 
 using namespace depth_clustering;
 
-class TestDepthGroundRemover : public DepthGroundRemover {
+class TestSavitskyGolaySmoothing : public SavitskyGolaySmoothing {
  public:
-  explicit TestDepthGroundRemover(const ProjectionParams& proj_params,
+  explicit TestSavitskyGolaySmoothing(const ProjectionParams& proj_params,
                                   int window_size = 5)
-      : DepthGroundRemover(proj_params, 5_deg, window_size) {}
+      : SavitskyGolaySmoothing(proj_params, window_size) {}
 
   cv::Mat CreateAngleImage(const cv::Mat& depth_image) {
-    return DepthGroundRemover::CreateAngleImage(depth_image);
+    return SavitskyGolaySmoothing::CreateAngleImage(depth_image);
   }
 
   cv::Mat GetSavitskyGolayKernel(int window_size) {
-    return DepthGroundRemover::GetSavitskyGolayKernel(window_size);
+    return SavitskyGolaySmoothing::GetSavitskyGolayKernel(window_size);
   }
 
   Radians GetLineAngle(const cv::Mat& depth_image, int col, int row_curr,
                        int row_neigh) {
-    return DepthGroundRemover::GetLineAngle(depth_image, col, row_curr,
+    return SavitskyGolaySmoothing::GetLineAngle(depth_image, col, row_curr,
                                             row_neigh);
   }
 };
 
-TEST(TestDepthGroundRemover, get_sav_gol_kernel) {
+TEST(TestSavitskyGolaySmoothing, get_sav_gol_kernel) {
   ProjectionParams proj_params;
-  TestDepthGroundRemover remover{proj_params};
+  TestSavitskyGolaySmoothing remover{proj_params};
   auto kernel = remover.GetSavitskyGolayKernel(5);
   float eps = std::numeric_limits<float>::epsilon();
   EXPECT_NEAR(-3.0f / 35.0f, kernel.at<float>(0, 0), eps);
@@ -60,9 +59,9 @@ TEST(TestDepthGroundRemover, get_sav_gol_kernel) {
   EXPECT_NEAR(89.0f / 429.0f, kernel.at<float>(0, 5), eps);
 }
 
-TEST(TestDepthGroundRemoverDeath, get_sav_gol_kernel_even) {
+TEST(TestSavitskyGolaySmoothingDeath, get_sav_gol_kernel_even) {
   ProjectionParams proj_params;
-  TestDepthGroundRemover remover{proj_params};
+  TestSavitskyGolaySmoothing remover{proj_params};
   try {
     auto kernel = remover.GetSavitskyGolayKernel(2);
     FAIL();
@@ -72,9 +71,9 @@ TEST(TestDepthGroundRemoverDeath, get_sav_gol_kernel_even) {
   }
 }
 
-TEST(TestDepthGroundRemoverDeath, get_sav_gol_kernel_bad_window_size) {
+TEST(TestSavitskyGolaySmoothingDeath, get_sav_gol_kernel_bad_window_size) {
   ProjectionParams proj_params;
-  TestDepthGroundRemover remover{proj_params};
+  TestSavitskyGolaySmoothing remover{proj_params};
   try {
     auto kernel = remover.GetSavitskyGolayKernel(131);
     FAIL();
@@ -84,13 +83,13 @@ TEST(TestDepthGroundRemoverDeath, get_sav_gol_kernel_bad_window_size) {
   }
 }
 
-TEST(TestDepthGroundRemover, trivial_depth_image) {
+TEST(TestSavitskyGolaySmoothing, trivial_depth_image) {
   ProjectionParams proj_params;
   proj_params.SetSpan(SpanParams(0_deg, 5_deg, 1_deg),
                       SpanParams::Direction::VERTICAL);
   proj_params.SetSpan(SpanParams(0_deg, 5_deg, 1_deg),
                       SpanParams::Direction::HORIZONTAL);
-  TestDepthGroundRemover remover{proj_params};
+  TestSavitskyGolaySmoothing remover{proj_params};
   auto depth_image = cv::Mat::zeros(5, 5, CV_32F);
   auto res = remover.CreateAngleImage(depth_image);
   auto eps = std::numeric_limits<float>::epsilon();
@@ -101,7 +100,7 @@ TEST(TestDepthGroundRemover, trivial_depth_image) {
   EXPECT_NEAR(0.0f, res.at<float>(4, 4), eps);
 }
 
-TEST(TestDepthGroundRemover, trivial_depth_image_vertical) {
+TEST(TestSavitskyGolaySmoothing, trivial_depth_image_vertical) {
   ProjectionParams proj_params;
   Radians start_angle = 0_deg;
   Radians end_angle = 5_deg;
@@ -110,7 +109,7 @@ TEST(TestDepthGroundRemover, trivial_depth_image_vertical) {
                       SpanParams::Direction::VERTICAL);
   proj_params.SetSpan(SpanParams(start_angle, end_angle, step),
                       SpanParams::Direction::HORIZONTAL);
-  TestDepthGroundRemover remover{proj_params};
+  TestSavitskyGolaySmoothing remover{proj_params};
   cv::Mat depth_image =
       cv::Mat::zeros(proj_params.rows(), proj_params.cols(), CV_32F);
   for (int r = 0; r < depth_image.rows; ++r) {

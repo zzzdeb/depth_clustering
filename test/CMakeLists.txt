@@ -21,7 +21,7 @@ add_executable(depth_clustering_test
                  test_cloud_projection.cpp
                  test_angle_diff.cpp
                  test_line_dist_diff.cpp
-                 test_ground_remove.cpp)
+                 test_savitsky_golay_smoothing.cpp)
 
 target_link_libraries(depth_clustering_test
                     test_help_funcs

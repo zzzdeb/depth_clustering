@@ -37,6 +37,8 @@
 
 #include "./depth_ground_remover.h"
 
+#include "ground_removal/abstract_ground_remover.h"
+
 namespace depth_clustering {
 
 typedef pcl::PointXYZL PointT;

@@ -15,3 +15,20 @@ Vertical: {
   angle_end_2: -24.87,
   n_2: 32
 }
+
+
+std::unique_ptr<ProjectionParams> ProjectionParams::IMR_LaserScanner()
+{
+  auto params = ProjectionParams();
+  params.SetSpan(SpanParams(-180_deg, 180_deg, 80),
+                 SpanParams::Direction::HORIZONTAL);
+  params.SetSpan(SpanParams(-1.0995574_rad, 2.356195_rad, 793),
+                     SpanParams::Direction::VERTICAL);
+  params.FillCosSin();
+  if (!params.valid())
+  {
+    ROS_ERROR("params are not valid!");
+    return nullptr;
+  }
+  return mem_utils::make_unique<ProjectionParams>(params);
+}

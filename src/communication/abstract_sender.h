@@ -100,7 +100,7 @@ class AbstractSender : public virtual Identifiable {
    */
   void RemoveClient(int id) {
     if (_clients.find(id) == _clients.end()) {
-      ROS_ERROR("no such client to delete: %d\n", id);
+      ROS_INFO("no such client to delete: %d", id);
       return;
     }
     auto* client = _clients[id];

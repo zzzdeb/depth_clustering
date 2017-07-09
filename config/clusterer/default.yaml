@@ -1,6 +1,6 @@
 #Parameters for node
 #
-from_path: "/home/zzz/ros/algorithms/data/scenario1" # delete it if you dont run it from data
+from_path: "/home/upns/zzz/ba_ws/data/scenario1" # delete it if you dont run it from data
 
 node: {
   fixed_frame: "world",

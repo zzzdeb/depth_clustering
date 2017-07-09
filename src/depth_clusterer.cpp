@@ -19,12 +19,15 @@
 
 #include "ros_bridge/ros_visualizer.h"
 #include "ros_bridge/objects_publisher.h"
+#include "ros_bridge/cloud_odom_ros_subscriber.h"
 
 using std::string;
 using std::vector;
 
 
 using namespace depth_clustering;
+
+using ClustererT = ImageBasedClusterer<LinearImageLabeler<>>;
 
 void ReadData(const Radians &angle_tollerance, const string &in_path,
               RosVisualizer *visualizer,
@@ -34,7 +37,7 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
     // delay reading for one second to allow GUI to load
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     // now load the data
-    ROS_INFO("running on Moosman data\n");
+    ROS_INFO("running on Moosman data");
 
     int min_cluster_size;
     if (nh->getParam("clusterer/min_cluster_size", min_cluster_size))
@@ -94,7 +97,7 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
         depth_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
         // tunnel_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
         auto current_millis = timer.measure(time_utils::Timer::Units::Milli);
-        ROS_INFO("It took %lu ms to process and show everything.\n",
+        ROS_INFO("It took %lu ms to process and show everything.",
                 current_millis);
         uint max_wait_time = 100;
         if (current_millis > max_wait_time)
@@ -102,7 +105,7 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
             continue;
         }
         auto time_to_wait = max_wait_time - current_millis;
-        ROS_INFO("Waiting another %lu ms.\n", time_to_wait);
+        ROS_INFO("Waiting another %lu ms.", time_to_wait);
         std::this_thread::sleep_for(std::chrono::milliseconds(time_to_wait));
     }
 }
@@ -116,7 +119,7 @@ void run_from_path(ros::NodeHandle& nh_p, ros::NodeHandle& nh)
     nh_p.param("clusterer/angle_tollerance", angle_arg, 10.0);
 
     Radians angle_tollerance = Radians::FromDegrees(angle_arg);
-    ROS_INFO("Reading from: %s \n", in_path.c_str());
+    ROS_INFO("Reading from: %s ", in_path.c_str());
 
     RosVisualizer visualizer(nh_p);
 
@@ -141,15 +144,15 @@ int main(int argc, char* argv[])
     ros::NodeHandle nh;
 
     string from_path;
-    if (nh_p.getParam("from_path", from_path);
+    if (nh_p.getParam("from_path", from_path))
     {
         run_from_path(nh_p, nh);
         return 0;
     }
 
     string lidar_config_link;
-    if (nh_p.getParam("lidar_config_link", lidar_config_link))
-        ROS_ERROR("could not find lidar_config_link")
+    if (!nh_p.getParam("lidar_config_link", lidar_config_link))
+        ROS_ERROR("could not find lidar_config_link");
     auto proj_params_ptr =
         ProjectionParams::FromConfigFile(lidar_config_link);
 
@@ -160,7 +163,49 @@ int main(int argc, char* argv[])
     RosVisualizer visualizer(nh_p);
 
     ObjectsPublisher objects_publisher(nh_p);
+
+    string topic_clouds;
+    if (!nh_p.getParam("node/topic_clouds", topic_clouds))
+        ROS_ERROR("could not find topic_clouds");
+
+    CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
+
+    int min_cluster_size;
+    if (nh_p.getParam("clusterer/min_cluster_size", min_cluster_size))
+        ROS_INFO("Minimum cluster size: %i", min_cluster_size);
+    else ROS_ERROR("Could not find ~/clusterer/min_cluster_size");
+
+    int max_cluster_size;
+    if (nh_p.getParam("clusterer/max_cluster_size", max_cluster_size))
+        ROS_INFO("Minimum cluster size: %i", max_cluster_size);
+    else ROS_ERROR("Could not find ~/clusterer/max_cluster_size");
+
+    string remover;
+    if (!nh_p.getParam("ground_remover/remover", remover))
+        ROS_ERROR("Could not find ~/ground_remover/remover");
+
+    int smooth_window_size = 7;
+    Radians ground_remove_angle = 7_deg;
+
+    auto depth_ground_remover = DepthGroundRemover(
+      *proj_params_ptr, ground_remove_angle, smooth_window_size);
+
+    ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
+    clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
+
+    // subscriber.AddClient(&depth_ground_remover);
+    // depth_ground_remover.AddClient(&clusterer);
+    subscriber.AddClient(&clusterer);
+    clusterer.SetCloudClient(&visualizer);
+    clusterer.AddClient(&objects_publisher);
     
+    ROS_INFO("Running with angle tollerance: %f degrees",
+            angle_tollerance.ToDegrees());
+
+    subscriber.StartListeningToRos();
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
+
     ros::waitForShutdown();
     return 0;
 }

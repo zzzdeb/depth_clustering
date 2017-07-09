@@ -1,6 +1,6 @@
 #Parameters for husky bag file recorded by me
 
-lidar_config_file: "/home/zzz/ros/hdl64.cfg"
+lidar_config_link: "/home/upns/zzz/algorithms/src/depth_clustering/config/projection/husky.cfg"
 
 node: {
   fixed_frame: "map",

@@ -19,4 +19,5 @@ target_link_libraries(depth_clusterer
                         tunnel_ground_removal
                         folder_reader
                         ros_visualizer
+                        ros_bridge
                         ${catkin_LIBRARIES})

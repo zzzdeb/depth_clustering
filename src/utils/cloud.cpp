@@ -68,7 +68,7 @@ void Cloud::InitProjection(const ProjectionParams& params) {
   }
   _projection = CloudProjection::Ptr(new SphericalProjection(params));
   if (!_projection) {
-    ROS_ERROR("failed to initalize projection.\n");
+    ROS_ERROR("failed to initalize projection.");
     return;
   }
   _projection = _projection->Clone();
