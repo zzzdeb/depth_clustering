@@ -52,8 +52,7 @@ typedef pcl::PointCloud<PointT> PointCloudT;
  *
  * @param      params  projection params
  */
-class TunnelGroundRemover : public AbstractClient<Cloud>,
-                           public AbstractSender<Cloud> {
+class TunnelGroundRemover : public AbstractGroundRemover {
   using ClientT = AbstractClient<Cloud>;
   using SenderT = AbstractSender<Cloud>;
 
@@ -64,8 +63,7 @@ class TunnelGroundRemover : public AbstractClient<Cloud>,
                               int window_size = 5,
                               bool use_mbb = true
                               )
-      : ClientT{},
-        SenderT{SenderType::STREAMER},
+      : AbstractGroundRemover(),
         _params{params},
         _window_size{window_size},
         _use_mbb{use_mbb},
@@ -73,7 +71,7 @@ class TunnelGroundRemover : public AbstractClient<Cloud>,
         _nh{nh}
         {
     _marker_pub = _nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1);
-    _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("bodenentfernung", 1);
+    _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1);
   }
   virtual ~TunnelGroundRemover() {}
 

@@ -319,7 +319,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
         params._col_angles.push_back(params._h_span_params.start_angle() +
                                      params._h_span_params.step() * c);
       }
-
+      
       // fill the rows
       if (str_angles.size()==5) 
       {
@@ -333,6 +333,9 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
           SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
                      Radians::FromDegrees(std::stod(str_angles.back())), rows);
       }
+
+
+
       // fill the rows with respect to img.cfg spacings
       for (size_t i = 4; i < str_angles.size(); ++i)
       {

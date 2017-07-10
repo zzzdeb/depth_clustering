@@ -16,13 +16,13 @@ clusterer: {
 }
 
 cloud_publisher: {
-  topic_name: "segmented_cloud"
+  topic_name: "/segmented_cloud"
 }
 
 objects_publisher: {
   topic_name: "segmented_objects",
   use_axial_bounding_box: true,
-  frame_id: "front_laser" # work on tf. otherwise it cant be different from node frame
+  frame_id: "front_laser" # work on tf. otherwise it cant be different from laser frame
 }
 
 

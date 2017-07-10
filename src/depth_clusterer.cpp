@@ -7,6 +7,7 @@
 #include "clusterers/image_based_clusterer.h"
 #include "image_labelers/diff_helpers/diff_factory.h"
 
+#include "ground_removal/abstract_ground_remover.h"
 #include "ground_removal/depth_ground_remover.h"
 #include "ground_removal/tunnel_ground_remover.h"
 
@@ -170,6 +171,8 @@ int main(int argc, char* argv[])
 
     CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
 
+
+    //Clusterer
     int min_cluster_size;
     if (nh_p.getParam("clusterer/min_cluster_size", min_cluster_size))
         ROS_INFO("Minimum cluster size: %i", min_cluster_size);
@@ -180,24 +183,47 @@ int main(int argc, char* argv[])
         ROS_INFO("Minimum cluster size: %i", max_cluster_size);
     else ROS_ERROR("Could not find ~/clusterer/max_cluster_size");
 
-    string remover;
-    if (!nh_p.getParam("ground_remover/remover", remover))
-        ROS_ERROR("Could not find ~/ground_remover/remover");
-
-    int smooth_window_size = 7;
-    Radians ground_remove_angle = 7_deg;
-
-    auto depth_ground_remover = DepthGroundRemover(
-      *proj_params_ptr, ground_remove_angle, smooth_window_size);
-
     ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
     clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
-
-    // subscriber.AddClient(&depth_ground_remover);
-    // depth_ground_remover.AddClient(&clusterer);
-    subscriber.AddClient(&clusterer);
     clusterer.SetCloudClient(&visualizer);
     clusterer.AddClient(&objects_publisher);
+
+
+    //Ground_remover
+    AbstractGroundRemover* ground_remover;
+    string remover;
+    if (!nh_p.getParam("ground_remover/remover", remover))
+    {
+        ROS_INFO("Could not find ~/ground_remover/remover. Go on without ground_remover");
+        subscriber.AddClient(&clusterer);
+    }
+    else
+    {
+        if(remover=="detph_ground_remover")
+        {
+            int smooth_window_size;
+            if (nh_p.getParam("ground_remover/smooth_window_size", smooth_window_size))
+                ROS_INFO("ground_remover/smooth_window_size: %i", smooth_window_size);
+            else ROS_ERROR("Could not find ~/ground_remover/smooth_window_size");
+            float angle;
+            if (nh_p.getParam("ground_remover/angle", angle))
+                ROS_INFO("ground_remover/angle: %f", angle);
+            else ROS_ERROR("Could not find ~/ground_remover/angle");
+            Radians ground_remove_angle = Radians::FromDegrees(angle);
+
+            ground_remover = new DepthGroundRemover(
+                *proj_params_ptr, ground_remove_angle, smooth_window_size);
+            }
+        if(remover=="tunnel_ground_remover") 
+            ground_remover = new TunnelGroundRemover(
+                *proj_params_ptr, 1, nh_p);
+        subscriber.AddClient(ground_remover);
+        ground_remover->AddClient(&clusterer);
+    }
+    
+
+
+
     
     ROS_INFO("Running with angle tollerance: %f degrees",
             angle_tollerance.ToDegrees());

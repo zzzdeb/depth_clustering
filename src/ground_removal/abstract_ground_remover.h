@@ -48,7 +48,7 @@ class AbstractGroundRemover : public AbstractClient<Cloud>,
         {}
 
   virtual ~AbstractGroundRemover() {}
-
+  
 };
 
 }  // namespace depth_clustering
