@@ -26,6 +26,7 @@
 #include "utils/mem_utils.h"
 
 #include <ros/console.h>
+#include <ros/assert.h>
 
 namespace depth_clustering
 {
@@ -307,46 +308,63 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
       params._h_span_params =
           SpanParams(Radians::FromDegrees(std::stod(str_angles[2])),
                      Radians::FromDegrees(std::stod(str_angles[3])), cols);
-      fprintf(stderr, "start:%f, stop:%f, span:%f, step:%f",
+      ROS_INFO("start:%f, stop:%f, span:%f, step:%f",
               params._h_span_params.start_angle().ToDegrees(),
               params._h_span_params.end_angle().ToDegrees(),
               params._h_span_params.span().ToDegrees(),
               params._h_span_params.step().ToDegrees());
 
-      // fill the cols spacing
-      for (int c = 0; c < cols; ++c)
+          // fill the cols spacing
+          for (int c = 0; c < cols; ++c)
+          {
+            params._col_angles.push_back(params._h_span_params.start_angle() +
+                                        params._h_span_params.step() * c);
+          }
+      switch(str_angles.size())
       {
-        params._col_angles.push_back(params._h_span_params.start_angle() +
-                                     params._h_span_params.step() * c);
-      }
-      
-      // fill the rows
-      if (str_angles.size()==5) 
-      {
-        params._v_span_params =
-            SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
-                        Radians::FromDegrees(std::stod(str_angles[4])+1), rows);
-      }
-      else
-      {
-        params._v_span_params =
+        case 6:
+          params._v_span_params =
           SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
-                     Radians::FromDegrees(std::stod(str_angles.back())), rows);
+                     Radians::FromDegrees(std::stod(str_angles[5])), rows);
+
+          // fill the rows spacing
+          for (int r = 0; r < rows; ++r)
+          {
+            params._row_angles.push_back(params._v_span_params.start_angle() +
+                                        params._v_span_params.step() * r);
+          }
+          break;
+        case 5:
+          ROS_ASSERT(cols==1);
+          params._v_span_params =
+              SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
+                          Radians::FromDegrees(std::stod(str_angles[4])+1), rows);
+          
+          // fill the rows spacing
+          for (int r = 0; r < rows; ++r)
+          {
+            params._row_angles.push_back(params._v_span_params.start_angle() +
+                                        params._v_span_params.step() * r);
+          }
+          break;
+        default:
+          // fill the rows
+          params._v_span_params =
+              SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
+              Radians::FromDegrees(std::stod(str_angles.back())), rows);
+          // fill the rows with respect to img.cfg spacings
+          for (size_t i = 4; i < str_angles.size(); ++i)
+          {
+            params._row_angles.push_back(
+                Radians::FromDegrees(std::stof(str_angles[i])));
+          }
+          if (params._row_angles.size() != static_cast<size_t>(rows))
+          {
+            ROS_ERROR("wrong config");
+            return nullptr;
+          }
       }
 
-
-
-      // fill the rows with respect to img.cfg spacings
-      for (size_t i = 4; i < str_angles.size(); ++i)
-      {
-        params._row_angles.push_back(
-            Radians::FromDegrees(std::stof(str_angles[i])));
-      }
-      if (params._row_angles.size() != static_cast<size_t>(rows))
-      {
-        ROS_ERROR("wrong config");
-        return nullptr;
-      }
     }
   }
   // fill cos and sin arrays

@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        if(remover=="detph_ground_remover")
+        if(remover=="depth_ground_remover")
         {
             int smooth_window_size;
             if (nh_p.getParam("ground_remover/smooth_window_size", smooth_window_size))

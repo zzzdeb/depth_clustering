@@ -164,7 +164,11 @@ class ImageBasedClusterer : public AbstractClusterer {
     if(_cloud_client)
     {
       auto foo = std::make_pair(make_shared<Cloud>(cloud),*labels_ptr);
+      ROS_INFO("Created pair in: %lu us",
+            timer.measure());
       _cloud_client->OnNewObjectReceived(foo, this->id());
+      ROS_INFO("Shared with cloud clients in: %lu us",
+            timer.measure());
     }
   }
 
