@@ -90,84 +90,84 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
 
 void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
                                           PointCloudT& gl_cloud) {
-  pcl::PointXYZL min_point_OBB;
-  pcl::PointXYZL max_point_OBB;
-  pcl::PointXYZL position_OBB;
-  Eigen::Matrix3f rotational_matrix_OBB;
+  // pcl::PointXYZL min_point_OBB;
+  // pcl::PointXYZL max_point_OBB;
+  // pcl::PointXYZL position_OBB;
+  // Eigen::Matrix3f rotational_matrix_OBB;
 
-  pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
-  feature_extractor.setAngleStep(20);  //!!! must be tuned
-  feature_extractor.setInputCloud(cloud_p);
-  Timer timer;
-  feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
-  ROS_INFO("computing MBB took %lu us ", timer.measure());
-  feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
-                           rotational_matrix_OBB);
+  // pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
+  // feature_extractor.setAngleStep(20);  //!!! must be tuned
+  // feature_extractor.setInputCloud(cloud_p);
+  // Timer timer;
+  // feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
+  // ROS_INFO("computing MBB took %lu us ", timer.measure());
+  // feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
+  //                          rotational_matrix_OBB);
 
-  for (auto point : *cloud_p) {
-    if (point.z < 1.5) {
-      PointT p(point);
-      gl_cloud.push_back(p);
-    }
-  }
-  sensor_msgs::PointCloud2 cloud2;
-  pcl::toROSMsg(gl_cloud, cloud2);
-  cloud2.header.frame_id = "world";
-  cloud2.header.stamp = ros::Time::now();
-  _cloud_pub.publish(cloud2);
-
-  geometry_msgs::Vector3 scale;
-  scale.x = min_point_OBB.x;
-  scale.y = min_point_OBB.y;
-  scale.z = min_point_OBB.z;
-  geometry_msgs::Pose pose;
-  pose.position.x = position_OBB.x;
-  pose.position.y = position_OBB.y;
-  pose.position.z = position_OBB.z;
-  Eigen::Quaternionf q(rotational_matrix_OBB);
-  pose.orientation.x = q.x();
-  pose.orientation.y = q.y();
-  pose.orientation.z = q.z();
-  pose.orientation.w = q.w();
-
-  visualization_msgs::MarkerArray obj_markers;  //!!! Type
-  visualization_msgs::Marker marker;
-  int id = 0;
-  ros::Time stamp = ros::Time::now();  //!!! is it really now?
-                                       // for (const auto &object: objects)
-                                       // {
-
-  marker.header.frame_id = "world";  //!!!
-  marker.header.stamp = stamp;
-  marker.ns = "";
-  marker.id = id++;
-  marker.type = visualization_msgs::Marker::CUBE;
-  marker.action = visualization_msgs::Marker::ADD;
-  marker.pose = pose;
-  marker.scale = scale;
-  marker.color.a = 1;  // Don't forget to set the alpha!
-  marker.color.r = 0;
-  marker.color.g = 0;
-  marker.color.b = 0;
-  // only if using a MESH_RESOURCE marker type:
-  // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-  obj_markers.markers.push_back(marker);
+  // for (auto point : *cloud_p) {
+  //   if (point.z < 1.5) {
+  //     PointT p(point);
+  //     gl_cloud.push_back(p);
+  //   }
   // }
-  _marker_pub.publish(obj_markers);
+  // sensor_msgs::PointCloud2 cloud2;
+  // pcl::toROSMsg(gl_cloud, cloud2);
+  // cloud2.header.frame_id = "world";
+  // cloud2.header.stamp = ros::Time::now();
+  // _cloud_pub.publish(cloud2);
+
+  // geometry_msgs::Vector3 scale;
+  // scale.x = min_point_OBB.x;
+  // scale.y = min_point_OBB.y;
+  // scale.z = min_point_OBB.z;
+  // geometry_msgs::Pose pose;
+  // pose.position.x = position_OBB.x;
+  // pose.position.y = position_OBB.y;
+  // pose.position.z = position_OBB.z;
+  // Eigen::Quaternionf q(rotational_matrix_OBB);
+  // pose.orientation.x = q.x();
+  // pose.orientation.y = q.y();
+  // pose.orientation.z = q.z();
+  // pose.orientation.w = q.w();
+
+  // visualization_msgs::MarkerArray obj_markers;  //!!! Type
+  // visualization_msgs::Marker marker;
+  // int id = 0;
+  // ros::Time stamp = ros::Time::now();  //!!! is it really now?
+  //                                      // for (const auto &object: objects)
+  //                                      // {
+
+  // marker.header.frame_id = "world";  //!!!
+  // marker.header.stamp = stamp;
+  // marker.ns = "";
+  // marker.id = id++;
+  // marker.type = visualization_msgs::Marker::CUBE;
+  // marker.action = visualization_msgs::Marker::ADD;
+  // marker.pose = pose;
+  // marker.scale = scale;
+  // marker.color.a = 1;  // Don't forget to set the alpha!
+  // marker.color.r = 0;
+  // marker.color.g = 0;
+  // marker.color.b = 0;
+  // // only if using a MESH_RESOURCE marker type:
+  // // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+  // obj_markers.markers.push_back(marker);
+  // // }
+  // _marker_pub.publish(obj_markers);
 }
 
 void TunnelGroundRemover::RemoveGroundAABB(const PointCloudT::Ptr& cloud_p,
                                            PointCloudT& gl_cloud) {
-  pcl::PointXYZL min_point_OBB;
-  pcl::PointXYZL max_point_OBB;
-  pcl::PointXYZL position_OBB;
-  Eigen::Matrix3f rotational_matrix_OBB;
+  // pcl::PointXYZL min_point_OBB;
+  // pcl::PointXYZL max_point_OBB;
+  // pcl::PointXYZL position_OBB;
+  // Eigen::Matrix3f rotational_matrix_OBB;
 
-  pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
-  feature_extractor.setInputCloud(cloud_p);
-  feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
-  feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
-                           rotational_matrix_OBB);
+  // pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
+  // feature_extractor.setInputCloud(cloud_p);
+  // feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
+  // feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
+  //                          rotational_matrix_OBB);
 }
 
 }  // namespace depth_clustering

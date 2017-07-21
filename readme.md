@@ -16,12 +16,11 @@ Check out a video that shows all objects which have a bounding box of less than 
 ### Prerequisites ###
 - Catkin.
 - OpenCV: `sudo apt-get install libopencv-dev`
-<!--- QGLViewer: `sudo apt-get install libqglviewer-dev`!!! del-->
-- Qt (4 or 5 depending on system):
+<!-- - Qt (4 or 5 depending on system):
     + **Ubuntu 14.04:** `sudo apt-get install libqt4-dev`
-    + **Ubuntu 16.04:** `sudo apt-get install libqt5-dev`
-- (optional) PCL - needed for saving clouds to disk
-- (optional) ROS - needed for subscribing to topics
+    + **Ubuntu 16.04:** `sudo apt-get install libqt5-dev` -->
+- PCL
+- ROS
 
 ### Build script  ###
 This is a catkin package. So we assume that the code is in a catkin workspace

@@ -31,10 +31,10 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include <pcl/features/moment_of_inertia_estimation.h>
+// #include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/point_cloud.h>
 
-#include <opencv2/imgproc.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 // #include <Eigen/Geometry> 
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node name ="depth_clusterer" pkg="depth_clustering" type="depth_clusterer" output="screen">
+        <rosparam command="load" file="$(find depth_clustering)/config/clusterer/vlp16.yaml" />
+    </node>
+</launch>

@@ -18,8 +18,8 @@ ObjectsPublisher::ObjectsPublisher(ros::NodeHandle& nh)
   if(!nh.getParam("objects_publisher/frame_id", _frame_id)) 
     ROS_ERROR("couldnt find objects_publisher/frame_id");
 
-  if (!nh.param("objects_publisher/use_axial_bounding_box", _use_abb, true))
-    ROS_INFO("couldnt find objects_publisher/use_axial_bounding_box, default: true");
+  if (!nh.getParam("objects_publisher/use_axial_bounding_box", _use_abb))
+    ROS_ERROR("couldnt find objects_publisher/use_axial_bounding_box");
 }
 
 void ObjectsPublisher::OnNewObjectReceived(
@@ -39,35 +39,35 @@ void ObjectsPublisher::OnNewObjectReceived(
 void ObjectsPublisher::MinBB(
     const pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_ptr,
     pair<geometry_msgs::Pose, geometry_msgs::Vector3>& transformation) {
-  pcl::PointXYZL min_point_OBB;
-  pcl::PointXYZL max_point_OBB;
-  pcl::PointXYZL position_OBB;
-  Eigen::Matrix3f rotational_matrix_OBB;
+  // pcl::PointXYZL min_point_OBB;
+  // pcl::PointXYZL max_point_OBB;
+  // pcl::PointXYZL position_OBB;
+  // Eigen::Matrix3f rotational_matrix_OBB;
 
-  pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
-  feature_extractor.setInputCloud(cloud_ptr);
-  feature_extractor.setAngleStep(30);
-  feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
-                                //! computeOBB is private create yourown for
-  //! computeOBB.
-  feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
-                           rotational_matrix_OBB);
-  float factor = 1.5;
-  geometry_msgs::Vector3 scale;
-  scale.x = min_point_OBB.x * factor;
-  scale.y = min_point_OBB.y * factor;
-  scale.z = min_point_OBB.z * factor;
-  geometry_msgs::Pose pose;
-  pose.position.x = position_OBB.x;
-  pose.position.y = position_OBB.y;
-  pose.position.z = position_OBB.z;
+  // pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
+  // feature_extractor.setInputCloud(cloud_ptr);
+  // feature_extractor.setAngleStep(30);
+  // feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
+  //                               //! computeOBB is private create yourown for
+  // //! computeOBB.
+  // feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
+  //                          rotational_matrix_OBB);
+  // float factor = 1.5;
+  // geometry_msgs::Vector3 scale;
+  // scale.x = min_point_OBB.x * factor;
+  // scale.y = min_point_OBB.y * factor;
+  // scale.z = min_point_OBB.z * factor;
+  // geometry_msgs::Pose pose;
+  // pose.position.x = position_OBB.x;
+  // pose.position.y = position_OBB.y;
+  // pose.position.z = position_OBB.z;
 
-  Eigen::Quaternionf q(rotational_matrix_OBB);
-  pose.orientation.x = q.x();
-  pose.orientation.y = q.y();
-  pose.orientation.z = q.z();
-  pose.orientation.w = q.w();
-  transformation = make_pair(pose, scale);  //!!!
+  // Eigen::Quaternionf q(rotational_matrix_OBB);
+  // pose.orientation.x = q.x();
+  // pose.orientation.y = q.y();
+  // pose.orientation.z = q.z();
+  // pose.orientation.w = q.w();
+  // transformation = make_pair(pose, scale);  //!!!
 }
 
 void ObjectsPublisher::MinRecArea(

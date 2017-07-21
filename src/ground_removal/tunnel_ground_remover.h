@@ -27,7 +27,7 @@
 #include "utils/cloud.h"
 
 #include <pcl/point_cloud.h>
-#include <pcl/features/moment_of_inertia_estimation.h>
+// #include <pcl/features/moment_of_inertia_estimation.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
