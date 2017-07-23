@@ -25,6 +25,8 @@
 #include "projections/projection_params.h"
 #include "utils/radians.h"
 #include "utils/cloud.h"
+#include "utils/oriented_bounding_box.h"
+
 
 #include <pcl/point_cloud.h>
 // #include <pcl/features/moment_of_inertia_estimation.h>
@@ -58,15 +60,15 @@ class TunnelGroundRemover : public AbstractGroundRemover {
 
  public:
   explicit TunnelGroundRemover(const ProjectionParams& params,
-                              const double& height,
+                              double height,
                               ros::NodeHandle& nh,
                               int window_size = 5,
-                              bool use_mbb = true
+                              bool use_obb = true
                               )
       : AbstractGroundRemover(),
         _params{params},
         _window_size{window_size},
-        _use_mbb{use_mbb},
+        _use_obb{use_obb},
         _height{height},
         _nh{nh}
         {
@@ -101,7 +103,7 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   float _eps = 0.001f;
 
 private:
-  bool _use_mbb;
+  bool _use_obb;
   double _height;
   mutable int _counter = 0;
 };

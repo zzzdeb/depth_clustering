@@ -284,4 +284,6 @@ namespace depth_clustering
   };
 }
 
+#include "oriented_bounding_box.hpp"
+
 #endif

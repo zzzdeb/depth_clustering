@@ -26,5 +26,4 @@ target_link_libraries(savitsky_golay_smoothing
 
 add_library(oriented_bounding_box SHARED oriented_bounding_box.cpp)
 target_link_libraries(oriented_bounding_box
-                        ${PCL_LIBRARIES}                        
-)           
+                        ${PCL_LIBRARIES})          

@@ -8,7 +8,7 @@ node: {
   num_thread: 1
 }
 ground_remover: {
-  remover: "depth_ground_remover",
+  remover: "tunnel_ground_remover",
   angle: 7.0,
   smooth_window_size: 5
 }
