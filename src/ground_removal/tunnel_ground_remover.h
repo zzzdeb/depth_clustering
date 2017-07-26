@@ -59,18 +59,6 @@ class TunnelGroundRemover : public AbstractGroundRemover {
 
  public:
   explicit TunnelGroundRemover(ros::NodeHandle& nh,
-<<<<<<< HEAD
-                              const ProjectionParams& params,
-                              double height,
-                              double sensor_h,
-                              int window_size = 5,
-                              bool use_obb = true
-                              )
-      : AbstractGroundRemover(),
-        _nh{nh},
-        _marker_pub{_nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1)},
-        _cloud_pub{_nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1)},
-=======
                                const ProjectionParams& params, double height,
                                double sensor_h, int window_size = 5,
                                bool use_obb = true)
@@ -80,21 +68,14 @@ class TunnelGroundRemover : public AbstractGroundRemover {
             _nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1)},
         _cloud_pub{
             _nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1)},
->>>>>>> ubuntu_1404
         _params{params},
         _height{height},
         _sensor_h{sensor_h},
         _smoother{params, window_size},
         _window_size{window_size},
-<<<<<<< HEAD
-        _use_obb{use_obb}
-        {}
-=======
-        _use_obb{use_obb} 
-  {
-    _nh.getParam("node/laser_frame",_frame_id);
+        _use_obb{use_obb} {
+    _nh.getParam("node/laser_frame", _frame_id);
   }
->>>>>>> ubuntu_1404
   virtual ~TunnelGroundRemover() {}
 
   /**
@@ -111,7 +92,7 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   void RemoveGroundAABB(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
 
   void PublishInfo(const PointCloudT& gl_cloud, const PointT& min_point_OBB,
-                   const PointT& max_point_OBB, 
+                   const PointT& max_point_OBB,
                    const PointT& position_OBB = PointT(),
                    const Eigen::Matrix3f& rot_M = Eigen::Matrix3f());
 
@@ -124,11 +105,7 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   float _eps = 0.001f;
   SavitskyGolaySmoothing _smoother;
 
-<<<<<<< HEAD
-private:
-=======
  private:
->>>>>>> ubuntu_1404
   double _height;
   double _sensor_h;
   bool _use_obb;

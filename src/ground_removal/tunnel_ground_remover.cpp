@@ -51,7 +51,7 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   Timer total_timer;
   PointCloudT::Ptr pcl_cloud_p = cloud.ToPcl();
   PointCloudT gl_pcl_p;
-  if (!_use_obb) //!!!
+  if (!_use_obb)  //!!!
     RemoveGroundOBB(pcl_cloud_p, gl_pcl_p);
   else
     RemoveGroundAABB(pcl_cloud_p, gl_pcl_p);
@@ -61,9 +61,10 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
 
   Cloud::Ptr groundless_cloud_p = cloud.FromPcl(gl_pcl_p);
   groundless_cloud_p->InitProjection(_params);
-  
-  //debug
-  cv::imwrite( "/home/zzz/Pictures/Gray_Image.jpg", groundless_cloud_p->projection_ptr()->depth_image());
+
+  // debug
+  cv::imwrite("/home/zzz/Pictures/Gray_Image.jpg",
+              groundless_cloud_p->projection_ptr()->depth_image());
 
   // debug
   cv::imwrite("/home/zzz/Pictures/Gray_Image.jpg",
@@ -131,9 +132,11 @@ void TunnelGroundRemover::RemoveGroundAABB(const PointCloudT::Ptr& cloud_p,
   PublishInfo(gl_cloud, min_point_AABB, max_point_AABB);
 }
 
-void TunnelGroundRemover::PublishInfo(const PointCloudT& gl_cloud, const PointT& min_point_OBB,
-                 const PointT& max_point_OBB, const PointT& position_OBB,
-                 const Eigen::Matrix3f& rot_M) {
+void TunnelGroundRemover::PublishInfo(const PointCloudT& gl_cloud,
+                                      const PointT& min_point_OBB,
+                                      const PointT& max_point_OBB,
+                                      const PointT& position_OBB,
+                                      const Eigen::Matrix3f& rot_M) {
   sensor_msgs::PointCloud2 cloud2;
   pcl::toROSMsg(gl_cloud, cloud2);
   cloud2.header.frame_id = _frame_id;
@@ -190,7 +193,8 @@ void TunnelGroundRemover::RemoveGroundAABB(const PointCloudT::Ptr& cloud_p,
 
   // pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
   // feature_extractor.setInputCloud(cloud_p);
-  // feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
+  // feature_extractor.compute();  //!!! is it necessarily to compute all
+  // feateres?
   // feature_extractor.getAABB(min_point_OBB, max_point_OBB, position_OBB,
   //                          rotational_matrix_OBB);
 }
