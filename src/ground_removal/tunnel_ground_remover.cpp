@@ -43,7 +43,7 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   // this can be done even faster if we switch to column-major implementation
   // thus allowing us to load whole row in L1 cache
   if (!cloud.projection_ptr()) {
-    ROS_ERROR("No projection in cloud..");
+    ROS_INFO("No projection in cloud..");
   }
 
   Cloud cloud_copy(cloud);
@@ -51,7 +51,7 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   Timer total_timer;
   PointCloudT::Ptr pcl_cloud_p = cloud.ToPcl();
   PointCloudT gl_pcl_p;
-  if (_use_mbb)
+  if (_use_obb)
     RemoveGroundOBB(pcl_cloud_p, gl_pcl_p);
   else
     RemoveGroundAABB(pcl_cloud_p, gl_pcl_p);
@@ -61,27 +61,21 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
 
   Cloud::Ptr groundless_cloud_p = cloud.FromPcl(gl_pcl_p);
   groundless_cloud_p->InitProjection(_params);
+  
+  //debug
+  cv::imwrite( "/home/zzz/Pictures/Gray_Image.jpg", groundless_cloud_p->projection_ptr()->depth_image());
 
-  // DepthGroundRemover dgr(_params, 5_deg);
-  // const cv::Mat& depth_image =
-  //     dgr.RepairDepth(groundless_cloud_p->projection_ptr()->depth_image(), 5,
-  //     1.0f);
-  // auto angle_image = dgr.CreateAngleImage(depth_image);
-  // auto smoothed_image = dgr.ApplySavitskyGolaySmoothing(angle_image,
-  // _window_size);
-
-  // cloud_copy.projection_ptr()->depth_image() = smoothed_image;
   cloud_copy.projection_ptr()->depth_image() =
       groundless_cloud_p->projection_ptr()->depth_image();
 
   if (end > 2000000)  //!!! must be provided
   {
-    _use_mbb = false;
-    ROS_INFO("ground_removal set to without MinBB");
+    _use_obb = false;
+    ROS_INFO("ground_removal set to without OBB");
   } else if (end < 1500000)  //!!! must be provided
   {
-    _use_mbb = true;
-    ROS_INFO("ground_removal set to use MinBB");
+    _use_obb = true;
+    ROS_INFO("ground_removal set to use OBB");
   }
 
   this->ShareDataWithAllClients(cloud_copy);
@@ -95,24 +89,24 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
   pcl::PointXYZL position_OBB;
   Eigen::Matrix3f rotational_matrix_OBB;
 
-  pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
+  OrientedBoundingBox<pcl::PointXYZL> feature_extractor;
   feature_extractor.setAngleStep(20);  //!!! must be tuned
   feature_extractor.setInputCloud(cloud_p);
   Timer timer;
-  feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
-  ROS_INFO("computing MBB took %lu us ", timer.measure());
+  feature_extractor.compute();
+  ROS_INFO("computing OBB took %lu us ", timer.measure());
   feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
                            rotational_matrix_OBB);
 
   for (auto point : *cloud_p) {
-    if (point.z < 1.5) {
+    if (point.z > -1) {
       PointT p(point);
       gl_cloud.push_back(p);
     }
   }
   sensor_msgs::PointCloud2 cloud2;
   pcl::toROSMsg(gl_cloud, cloud2);
-  cloud2.header.frame_id = "world";
+  cloud2.header.frame_id = "velodyne"; //!!!
   cloud2.header.stamp = ros::Time::now();
   _cloud_pub.publish(cloud2);
 
@@ -137,7 +131,7 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
                                        // for (const auto &object: objects)
                                        // {
 
-  marker.header.frame_id = "world";  //!!!
+  marker.header.frame_id = "velodyne";  //!!!
   marker.header.stamp = stamp;
   marker.ns = "";
   marker.id = id++;
@@ -158,16 +152,16 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
 
 void TunnelGroundRemover::RemoveGroundAABB(const PointCloudT::Ptr& cloud_p,
                                            PointCloudT& gl_cloud) {
-  pcl::PointXYZL min_point_OBB;
-  pcl::PointXYZL max_point_OBB;
-  pcl::PointXYZL position_OBB;
-  Eigen::Matrix3f rotational_matrix_OBB;
+  // pcl::PointXYZL min_point_AABB;
+  // pcl::PointXYZL max_point_AABB;
+  // pcl::PointXYZL position_AABB;
+  // Eigen::Matrix3f rotational_matrix_OBB;
 
-  pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
-  feature_extractor.setInputCloud(cloud_p);
-  feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
-  feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
-                           rotational_matrix_OBB);
+  // pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
+  // feature_extractor.setInputCloud(cloud_p);
+  // feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
+  // feature_extractor.getAABB(min_point_OBB, max_point_OBB, position_OBB,
+  //                          rotational_matrix_OBB);
 }
 
 }  // namespace depth_clustering

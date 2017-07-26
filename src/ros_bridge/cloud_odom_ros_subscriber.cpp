@@ -76,8 +76,9 @@ void PrintMsgStats(const sensor_msgs::PointCloud2ConstPtr& msg) {
 CloudOdomRosSubscriber::CloudOdomRosSubscriber(NodeHandle* node_handle,
                                                const ProjectionParams& params,
                                                const string& topic_clouds,
-                                               const string& topic_odom)
-    : AbstractSender{SenderType::STREAMER}, _params{params} {
+                                               const string& topic_odom,
+                                               bool without_projection)
+    : AbstractSender{SenderType::STREAMER}, _params{params} , _without_projection{without_projection} {
   _node_handle = node_handle;
   _topic_clouds = topic_clouds;
   _topic_odom = topic_odom;
@@ -111,7 +112,8 @@ void CloudOdomRosSubscriber::Callback(const PointCloud2::ConstPtr& msg_cloud,
   // PrintMsgStats(msg_cloud);
   Cloud::Ptr cloud_ptr = RosCloudToCloud(msg_cloud);
   cloud_ptr->SetPose(RosOdomToPose(msg_odom));
-  cloud_ptr->InitProjection(_params);
+  if (!_without_projection)
+    cloud_ptr->InitProjection(_params);
   ShareDataWithAllClients(*cloud_ptr);
 }
 
@@ -119,7 +121,8 @@ void CloudOdomRosSubscriber::CallbackVelodyne(
     const PointCloud2::ConstPtr& msg_cloud) {
   // PrintMsgStats(msg_cloud);
   Cloud::Ptr cloud_ptr = RosCloudToCloud(msg_cloud);
-  cloud_ptr->InitProjection(_params);
+  if (!_without_projection)
+    cloud_ptr->InitProjection(_params);
   ShareDataWithAllClients(*cloud_ptr);
 }
 

@@ -19,6 +19,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 target_link_libraries(tunnel_ground_removal
+                      oriented_bounding_box
                       identifiable
                       velodyne_utils
                       difference

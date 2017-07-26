@@ -46,7 +46,8 @@ class CloudOdomRosSubscriber : public AbstractSender<Cloud> {
   CloudOdomRosSubscriber(ros::NodeHandle* node_handle,
                          const ProjectionParams& params,
                          const std::string& topic_clouds,
-                         const std::string& topic_odom = "");
+                         const std::string& topic_odom = "",
+                         bool without_projection = false);
   virtual ~CloudOdomRosSubscriber() {
     delete _subscriber_odom;
     delete _subscriber_clouds;
@@ -74,6 +75,11 @@ class CloudOdomRosSubscriber : public AbstractSender<Cloud> {
    */
   void StartListeningToRos();
 
+  /**
+   * @brief      Publishing cloud withoud projection
+   */
+  void WithoutProjection() {_without_projection=true;}
+
  protected:
   Pose RosOdomToPose(const OdometryT::ConstPtr& msg);
   Cloud::Ptr RosCloudToCloud(const PointCloudT::ConstPtr& msg);
@@ -88,6 +94,7 @@ class CloudOdomRosSubscriber : public AbstractSender<Cloud> {
 
   ProjectionParams _params;
 
+  bool _without_projection;
   int _msg_queue_size;
 };
 

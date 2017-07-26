@@ -1,0 +1,33 @@
+#Parameters for IMR Reichezech data
+lidar_config_link: "/home/zzz/ros/algorithms/src/depth_clustering/config/projection/vlp16.cfg"
+
+node: {
+  fixed_frame: "/velodyne",
+  cloud_frame_id: "/velodyne",
+  topic_clouds: "/velodyne_points",
+  num_thread: 1
+}
+ground_remover: {
+  remover: "tunnel_ground_remover",
+  smooth_window_size: 5,
+  heigth: 1.0,
+  sensor_height: 1.0
+}
+clusterer: {
+  angle_tollerance: 10,
+  min_cluster_size: 20,
+  max_cluster_size: 100000
+}
+
+cloud_publisher: {
+  topic_name: "segmented_cloud",
+  frame_id: "/velodyne"
+}
+
+objects_publisher: {
+  topic_name: "segmented_objects",
+  use_axial_bounding_box: true,
+  frame_id: "/velodyne"
+}
+
+

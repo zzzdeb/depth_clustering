@@ -25,9 +25,11 @@
 #include "projections/projection_params.h"
 #include "utils/radians.h"
 #include "utils/cloud.h"
+#include "utils/oriented_bounding_box.h"
+
 
 #include <pcl/point_cloud.h>
-#include <pcl/features/moment_of_inertia_estimation.h>
+// #include <pcl/features/moment_of_inertia_estimation.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -57,22 +59,24 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   using SenderT = AbstractSender<Cloud>;
 
  public:
-  explicit TunnelGroundRemover(const ProjectionParams& params,
-                              const double& height,
-                              ros::NodeHandle& nh,
+  explicit TunnelGroundRemover(ros::NodeHandle& nh,
+                              const ProjectionParams& params,
+                              double height,
+                              double sensor_h,
                               int window_size = 5,
-                              bool use_mbb = true
+                              bool use_obb = true
                               )
       : AbstractGroundRemover(),
+        _nh{nh},
+        _marker_pub{_nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1)},
+        _cloud_pub{_nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1)},
         _params{params},
-        _window_size{window_size},
-        _use_mbb{use_mbb},
         _height{height},
-        _nh{nh}
-        {
-    _marker_pub = _nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1);
-    _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1);
-  }
+        _sensor_h{sensor_h},
+        _smoother{params, window_size},
+        _window_size{window_size},
+        _use_obb{use_obb}
+        {}
   virtual ~TunnelGroundRemover() {}
 
   /**
@@ -90,19 +94,18 @@ class TunnelGroundRemover : public AbstractGroundRemover {
 
 
  protected:
-
- //!!! add smoother
   ros::NodeHandle _nh;
   ros::Publisher _marker_pub, _cloud_pub;
 
   ProjectionParams _params;
-  int _window_size = 5;
-  Radians _ground_remove_angle = 5_deg;
   float _eps = 0.001f;
+  SavitskyGolaySmoothing _smoother;
 
 private:
-  bool _use_mbb;
   double _height;
+  double _sensor_h;
+  bool _use_obb;
+  int _window_size = 5;
   mutable int _counter = 0;
 };
 
