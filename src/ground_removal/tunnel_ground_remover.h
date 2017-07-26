@@ -59,22 +59,24 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   using SenderT = AbstractSender<Cloud>;
 
  public:
-  explicit TunnelGroundRemover(const ProjectionParams& params,
+  explicit TunnelGroundRemover(ros::NodeHandle& nh,
+                              const ProjectionParams& params,
                               double height,
-                              ros::NodeHandle& nh,
+                              double sensor_h,
                               int window_size = 5,
                               bool use_obb = true
                               )
       : AbstractGroundRemover(),
+        _nh{nh},
+        _marker_pub{_nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1)},
+        _cloud_pub{_nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1)},
         _params{params},
-        _window_size{window_size},
-        _use_obb{use_obb},
         _height{height},
-        _nh{nh}
-        {
-    _marker_pub = _nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1);
-    _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1);
-  }
+        _sensor_h{sensor_h},
+        _smoother{params, window_size},
+        _window_size{window_size},
+        _use_obb{use_obb}
+        {}
   virtual ~TunnelGroundRemover() {}
 
   /**
@@ -92,19 +94,18 @@ class TunnelGroundRemover : public AbstractGroundRemover {
 
 
  protected:
-
- //!!! add smoother
   ros::NodeHandle _nh;
   ros::Publisher _marker_pub, _cloud_pub;
 
   ProjectionParams _params;
-  int _window_size = 5;
-  Radians _ground_remove_angle = 5_deg;
   float _eps = 0.001f;
+  SavitskyGolaySmoothing _smoother;
 
 private:
-  bool _use_obb;
   double _height;
+  double _sensor_h;
+  bool _use_obb;
+  int _window_size = 5;
   mutable int _counter = 0;
 };
 

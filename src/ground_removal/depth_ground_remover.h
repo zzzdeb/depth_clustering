@@ -51,8 +51,9 @@ class DepthGroundRemover : public AbstractGroundRemover {
       : AbstractGroundRemover{},
         _params{params},
         _window_size{window_size},
-        _ground_remove_angle{ground_remove_angle} 
-        { _smoother = SavitskyGolaySmoothing(_params, window_size);}
+        _ground_remove_angle{ground_remove_angle},
+        _smoother{params, window_size}
+        {}
   virtual ~DepthGroundRemover() {}
 
   /**
@@ -91,11 +92,10 @@ class DepthGroundRemover : public AbstractGroundRemover {
    */
 
  protected:
-  SavitskyGolaySmoothing _smoother;
-
   ProjectionParams _params;
   int _window_size = 5;
   Radians _ground_remove_angle = 5_deg;
+  SavitskyGolaySmoothing _smoother;
 
   mutable int _counter = 0;
 };

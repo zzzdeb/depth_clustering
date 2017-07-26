@@ -1,7 +1,15 @@
 #Parameters for node
-#
-from_path: "/home/upns/zzz/ba_ws/data/scenario1" # delete it if you dont run it from data
 
+# erase from_path parameter if you dont run it from Moosmann's dataset.
+from_path: "/home/upns/zzz/ba_ws/data/scenario1" 
+
+# node: {
+#   fixed_frame: ros fixed frame_id
+#   laser_frame: ros laser frame_id
+#   cloud_frame_id: frame_id 
+#   topic_clouds: 
+#   num_thread: num of threads
+# }
 node: {
   fixed_frame: "world",
   laser_frame: "",
@@ -9,21 +17,45 @@ node: {
   topic_clouds: "",
   num_thread: 1
 }
+# ground_remover: {
+#   1.     
+    # remover: "depth_ground_remover",
+    # angle: 7.0,
+    # smooth_window_size: 5
+#   2.
+    # remover: "tunnel_ground_remover",
+    # smooth_window_size: 7.0,
+    # height: 
+    # sensor_height: 
+# }
 ground_remover: {
   remover: "depth_ground_remover",
   angle: 7.0,
   smooth_window_size: 5
 }
+# clusterer: {
+#   angle_tollerance: 10,
+#   min_cluster_size: 20,
+#   max_cluster_size: 100000
+# }
 clusterer: {
   angle_tollerance: 10,
   min_cluster_size: 20,
   max_cluster_size: 100000
 }
 
+# cloud_publisher: {
+#   topic_name: "segmented_cloud"
+# }
 cloud_publisher: {
   topic_name: "segmented_cloud"
 }
 
+# objects_publisher: {
+#   topic_name: "segmented_objects",
+#   use_axial_bounding_box: false,
+#   frame_id: "world"
+# }
 objects_publisher: {
   topic_name: "segmented_objects",
   use_axial_bounding_box: false,

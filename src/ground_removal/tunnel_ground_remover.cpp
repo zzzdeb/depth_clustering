@@ -43,7 +43,7 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   // this can be done even faster if we switch to column-major implementation
   // thus allowing us to load whole row in L1 cache
   if (!cloud.projection_ptr()) {
-    ROS_ERROR("No projection in cloud..");
+    ROS_INFO("No projection in cloud..");
   }
 
   Cloud cloud_copy(cloud);
@@ -61,16 +61,10 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
 
   Cloud::Ptr groundless_cloud_p = cloud.FromPcl(gl_pcl_p);
   groundless_cloud_p->InitProjection(_params);
+  
+  //debug
+  cv::imwrite( "/home/zzz/Pictures/Gray_Image.jpg", groundless_cloud_p->projection_ptr()->depth_image());
 
-  // DepthGroundRemover dgr(_params, 5_deg);
-  // const cv::Mat& depth_image =
-  //     dgr.RepairDepth(groundless_cloud_p->projection_ptr()->depth_image(), 5,
-  //     1.0f);
-  // auto angle_image = dgr.CreateAngleImage(depth_image);
-  // auto smoothed_image = dgr.ApplySavitskyGolaySmoothing(angle_image,
-  // _window_size);
-
-  // cloud_copy.projection_ptr()->depth_image() = smoothed_image;
   cloud_copy.projection_ptr()->depth_image() =
       groundless_cloud_p->projection_ptr()->depth_image();
 

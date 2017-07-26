@@ -7,6 +7,8 @@
 This is a fast and robust algorithm to segment point clouds taken with
 Velodyne sensor into objects. It works with all available Velodyne sensors,
 i.e. 16, 32 and 64 beam ones.
+With user provided Configuration it is even possible to work with any typical Laserscanner. But the one, who uses general configuration, must ensure that fundemantal algorithm makes sense to be implemented. 
+Due to the enviroment, a robot is operating in, appropriate configuration must be tuned (f.E. depth_ground_removal or tunnel_ground_removal)
 
 Check out a video that shows all objects which have a bounding box of less than 10 squared meters:
 [![Segmentation illustration](http://img.youtube.com/vi/mi-Z__B1yyE/0.jpg)](https://www.youtube.com/watch?v=mi-Z__B1yyE "Segmentation")
@@ -16,9 +18,6 @@ Check out a video that shows all objects which have a bounding box of less than 
 ### Prerequisites ###
 - Catkin.
 - OpenCV: `sudo apt-get install libopencv-dev`
-<!-- - Qt (4 or 5 depending on system):
-    + **Ubuntu 14.04:** `sudo apt-get install libqt4-dev`
-    + **Ubuntu 16.04:** `sudo apt-get install libqt5-dev` -->
 - PCL
 - ROS
 
@@ -41,10 +40,9 @@ P.S. in case you don't use `catkin build` you [should][catkin_tools_docs].
 Install it by `sudo pip install catkin_tools`.
 
 ## How to run? ##
-See [examples](examples/). There are ROS nodes as well as standalone
-binaries. Examples include showing axis oriented bounding boxes around found
-objects (these start with `show_objects_` prefix) as well as a node to save all
-segments to disk. The examples should be easy to tweak for your needs.
+'roslaunch depth_clustering ....'
+create your own launch file in ./launch/ (read depth_clusterer.launch)
+create your own configuration files in ./config/clusterer and ./config/projection (read defaults)
 
 ## Run on real world data ##
 Go to folder with binaries:
@@ -58,14 +56,11 @@ Get the data:
 mkdir data/; wget http://www.mrt.kit.edu/z/publ/download/velodyneslam/data/scenario1.zip -O data/moosmann.zip; unzip data/moosmann.zip -d data/; rm data/moosmann.zip
 ```
 
-Run a binary to show detected objects:
+Default configuration is for Moosmann's Dataset:
+edit parameter from_path in default.yaml to the path:
 ```
-./show_objects_moosmann --path data/scenario1/
+roslaunch depth_clustering depth_clusterer.launch
 ```
-
-#### Other data ####
-There are also examples on how to run the processing on KITTI data and on ROS
-input. Follow the `--help` output of each of the examples for more details.
 
 ## Documentation ##
 You should be able to get Doxygen documentation by running:

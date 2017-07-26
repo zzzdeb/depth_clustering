@@ -76,7 +76,15 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
     auto depth_ground_remover = DepthGroundRemover(
         *proj_params_ptr, ground_remove_angle, smooth_window_size);
 
-    auto tunnel_ground_remover = TunnelGroundRemover(*proj_params_ptr, 5, *nh);
+    double height;
+    if (nh->getParam("ground_remover/height", height))
+        ROS_INFO("ground_remover/height: %d", height);
+    else ROS_ERROR("Could not find ~/ground_remover/height");
+    double sensor_height;
+    if (nh->getParam("ground_remover/sensor_height", sensor_height))
+        ROS_INFO("ground_remover/sensor_height: %d", sensor_height);
+    else ROS_INFO("Could not find ~/ground_remover/sensor_height");
+    auto tunnel_ground_remover = TunnelGroundRemover(*nh, *proj_params_ptr, height, sensor_height);
 
     ImageBasedClusterer<LinearImageLabeler<>> clusterer(
         angle_tollerance, min_cluster_size, max_cluster_size);
@@ -214,9 +222,20 @@ int main(int argc, char* argv[])
             ground_remover = new DepthGroundRemover(
                 *proj_params_ptr, ground_remove_angle, smooth_window_size);
             }
-        if(remover=="tunnel_ground_remover") 
+        if(remover=="tunnel_ground_remover")
+        {
+            double height;
+            if (nh_p.getParam("ground_remover/height", height))
+                ROS_INFO("ground_remover/height: %d", height);
+            else ROS_ERROR("Could not find ~/ground_remover/height");
+            double sensor_height;
+            if (nh_p.getParam("ground_remover/sensor_height", sensor_height))
+                ROS_INFO("ground_remover/sensor_height: %d", sensor_height);
+            else ROS_INFO("Could not find ~/ground_remover/sensor_height");
             ground_remover = new TunnelGroundRemover(
-                *proj_params_ptr, 1, nh_p);
+                nh_p, *proj_params_ptr, height, sensor_height);
+            subscriber.WithoutProjection();
+        }
         subscriber.AddClient(ground_remover);
         ground_remover->AddClient(&clusterer);
     }
