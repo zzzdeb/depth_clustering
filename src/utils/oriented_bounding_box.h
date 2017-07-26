@@ -169,7 +169,10 @@ namespace depth_clustering
       bool
       getMassCenter (Eigen::Vector3f& mass_center) const;
 
+<<<<<<< HEAD
     private:
+=======
+>>>>>>> ubuntu_1404
 
       /** \brief This method rotates the given vector around the given axis.
         * \param[in] vector vector that must be rotated

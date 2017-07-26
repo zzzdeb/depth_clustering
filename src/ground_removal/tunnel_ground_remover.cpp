@@ -51,7 +51,7 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   Timer total_timer;
   PointCloudT::Ptr pcl_cloud_p = cloud.ToPcl();
   PointCloudT gl_pcl_p;
-  if (_use_obb)
+  if (!_use_obb) //!!!
     RemoveGroundOBB(pcl_cloud_p, gl_pcl_p);
   else
     RemoveGroundAABB(pcl_cloud_p, gl_pcl_p);
@@ -65,18 +65,22 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   //debug
   cv::imwrite( "/home/zzz/Pictures/Gray_Image.jpg", groundless_cloud_p->projection_ptr()->depth_image());
 
+  // debug
+  cv::imwrite("/home/zzz/Pictures/Gray_Image.jpg",
+              groundless_cloud_p->projection_ptr()->depth_image());
+
   cloud_copy.projection_ptr()->depth_image() =
       groundless_cloud_p->projection_ptr()->depth_image();
 
-  if (end > 2000000)  //!!! must be provided
-  {
-    _use_obb = false;
-    ROS_INFO("ground_removal set to without OBB");
-  } else if (end < 1500000)  //!!! must be provided
-  {
-    _use_obb = true;
-    ROS_INFO("ground_removal set to use OBB");
-  }
+  // if (end > 2000000)  //!!! must be provided
+  // {
+  //   _use_obb = false;
+  //   ROS_INFO("ground_removal set to without OBB");
+  // } else if (end < 1500000)  //!!! must be provided
+  // {
+  //   _use_obb = true;
+  //   ROS_INFO("ground_removal set to use OBB");
+  // }
 
   this->ShareDataWithAllClients(cloud_copy);
   _counter++;
@@ -99,14 +103,40 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
                            rotational_matrix_OBB);
 
   for (auto point : *cloud_p) {
-    if (point.z > -1) {
+    if (point.z < -(_height - _sensor_h)) {
       PointT p(point);
       gl_cloud.push_back(p);
     }
   }
+  PublishInfo(gl_cloud, min_point_OBB, max_point_OBB, position_OBB,
+              rotational_matrix_OBB);
+}
+
+void TunnelGroundRemover::RemoveGroundAABB(const PointCloudT::Ptr& cloud_p,
+                                           PointCloudT& gl_cloud) {
+  pcl::PointXYZL min_point_AABB;
+  pcl::PointXYZL max_point_AABB;
+
+  OrientedBoundingBox<pcl::PointXYZL> feature_extractor;
+  feature_extractor.setInputCloud(cloud_p);
+  feature_extractor.computeMeanValue();
+  feature_extractor.getAABB(min_point_AABB, max_point_AABB);
+
+  for (auto point : *cloud_p) {
+    if (point.z < -(_height - _sensor_h)) {
+      PointT p(point);
+      gl_cloud.push_back(p);
+    }
+  }
+  PublishInfo(gl_cloud, min_point_AABB, max_point_AABB);
+}
+
+void TunnelGroundRemover::PublishInfo(const PointCloudT& gl_cloud, const PointT& min_point_OBB,
+                 const PointT& max_point_OBB, const PointT& position_OBB,
+                 const Eigen::Matrix3f& rot_M) {
   sensor_msgs::PointCloud2 cloud2;
   pcl::toROSMsg(gl_cloud, cloud2);
-  cloud2.header.frame_id = "velodyne"; //!!!
+  cloud2.header.frame_id = _frame_id;
   cloud2.header.stamp = ros::Time::now();
   _cloud_pub.publish(cloud2);
 
@@ -118,7 +148,7 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
   pose.position.x = position_OBB.x;
   pose.position.y = position_OBB.y;
   pose.position.z = position_OBB.z;
-  Eigen::Quaternionf q(rotational_matrix_OBB);
+  Eigen::Quaternionf q(rot_M);
   pose.orientation.x = q.x();
   pose.orientation.y = q.y();
   pose.orientation.z = q.z();
@@ -131,7 +161,7 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
                                        // for (const auto &object: objects)
                                        // {
 
-  marker.header.frame_id = "velodyne";  //!!!
+  marker.header.frame_id = _frame_id;
   marker.header.stamp = stamp;
   marker.ns = "";
   marker.id = id++;
@@ -150,6 +180,7 @@ void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
   _marker_pub.publish(obj_markers);
 }
 
+<<<<<<< HEAD
 void TunnelGroundRemover::RemoveGroundAABB(const PointCloudT::Ptr& cloud_p,
                                            PointCloudT& gl_cloud) {
   // pcl::PointXYZL min_point_AABB;
@@ -164,4 +195,6 @@ void TunnelGroundRemover::RemoveGroundAABB(const PointCloudT::Ptr& cloud_p,
   //                          rotational_matrix_OBB);
 }
 
+=======
+>>>>>>> ubuntu_1404
 }  // namespace depth_clustering
