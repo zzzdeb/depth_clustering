@@ -265,6 +265,17 @@ OrientedBoundingBox<PointT>::getEigenVectors (Eigen::Vector3f& major, Eigen::Vec
 template <typename PointT> void
 OrientedBoundingBox<PointT>::computeMeanValue ()
 {
+  //!!!
+  if(!is_valid_)
+  {
+      if (!initCompute ())
+      {
+        deinitCompute ();
+        return;
+      }
+  }
+
+  
   mean_value_ (0) = 0.0f;
   mean_value_ (1) = 0.0f;
   mean_value_ (2) = 0.0f;

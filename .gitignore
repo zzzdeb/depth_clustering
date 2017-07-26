@@ -29,4 +29,8 @@
 
 /doc/latex/
 
+/notebooks/
+
+/.vscode/
+
 notebooks/.ipynb_checkpoints/*

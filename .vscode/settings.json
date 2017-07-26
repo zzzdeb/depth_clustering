@@ -41,6 +41,5 @@
         "vector": "cpp",
         "string": "cpp"
     },
-    "C_Cpp.clang_format_path": "/home/upns/zzz/algorithms/src/depth_clustering/.clang-format",
     "editor.formatOnType": true
 }

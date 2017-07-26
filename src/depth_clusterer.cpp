@@ -50,22 +50,6 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
         ROS_INFO("Minimum cluster size: %i", max_cluster_size);
     else ROS_ERROR("Could not find ~/clusterer/max_cluster_size");
 
-    string remover;
-    if (!nh->getParam("ground_remover/remover", remover))
-        ROS_ERROR("Could not find ~/ground_remover/remover");
-    Radians ground_remove_angle;
-    int smooth_window_size;
-    if (remover==("depth_ground_remover"))
-    {
-        if (nh->getParam("ground_remover/smooth_window_size", smooth_window_size))
-            ROS_INFO("ground_remover/smooth_window_size: %i", smooth_window_size);
-        else ROS_ERROR("Could not find ~/ground_remover/smooth_window_size");
-        float angle;
-        if (nh->getParam("ground_remover/angle", angle))
-            ROS_INFO("ground_remover/angle: %f", angle);
-        else ROS_ERROR("Could not find ~/ground_remover/angle");
-        ground_remove_angle = Radians::FromDegrees(angle);
-    }  
 
     auto image_reader =
         FolderReader(in_path, ".png", FolderReader::Order::SORTED);
@@ -73,25 +57,52 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
     auto proj_params_ptr =
         ProjectionParams::FromConfigFile(config_reader.GetNextFilePath());
 
-    auto depth_ground_remover = DepthGroundRemover(
-        *proj_params_ptr, ground_remove_angle, smooth_window_size);
+    //Ground_remover
+    AbstractGroundRemover* ground_remover;
+    string remover;
+    if (!nh->getParam("ground_remover/remover", remover))
+    {
+        ROS_ERROR("Could not find ~/ground_remover/remover. Go on without ground_remover");
+    }
+    else
+    {
+        if(remover=="depth_ground_remover")
+        {
+            int smooth_window_size;
+            if (nh->getParam("ground_remover/smooth_window_size", smooth_window_size))
+                ROS_INFO("ground_remover/smooth_window_size: %i", smooth_window_size);
+            else ROS_ERROR("Could not find ~/ground_remover/smooth_window_size");
+            float angle;
+            if (nh->getParam("ground_remover/angle", angle))
+                ROS_INFO("ground_remover/angle: %f", angle);
+            else ROS_ERROR("Could not find ~/ground_remover/angle");
+            Radians ground_remove_angle = Radians::FromDegrees(angle);
 
-    double height;
-    if (nh->getParam("ground_remover/height", height))
-        ROS_INFO("ground_remover/height: %d", height);
-    else ROS_ERROR("Could not find ~/ground_remover/height");
-    double sensor_height;
-    if (nh->getParam("ground_remover/sensor_height", sensor_height))
-        ROS_INFO("ground_remover/sensor_height: %d", sensor_height);
-    else ROS_INFO("Could not find ~/ground_remover/sensor_height");
-    auto tunnel_ground_remover = TunnelGroundRemover(*nh, *proj_params_ptr, height, sensor_height);
+            ground_remover = new DepthGroundRemover(
+                *proj_params_ptr, ground_remove_angle, smooth_window_size);
+            }
+        if(remover=="tunnel_ground_remover")
+        {
+            double height;
+            if (nh->getParam("ground_remover/height", height))
+                ROS_INFO("ground_remover/height: %d", height);
+            else ROS_ERROR("Could not find ~/ground_remover/height");
+            double sensor_height;
+            if (nh->getParam("ground_remover/sensor_height", sensor_height))
+                ROS_INFO("ground_remover/sensor_height: %d", sensor_height);
+            else ROS_INFO("Could not find ~/ground_remover/sensor_height");
+            ground_remover = new TunnelGroundRemover(
+                *nh, *proj_params_ptr, height, sensor_height);
+        }
+    }
+
 
     ImageBasedClusterer<LinearImageLabeler<>> clusterer(
         angle_tollerance, min_cluster_size, max_cluster_size);
     clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
     clusterer.SetCloudClient(visualizer);
 
-    depth_ground_remover.AddClient(&clusterer);
+    ground_remover->AddClient(&clusterer);
     // tunnel_ground_remover.AddClient(&clusterer);
     clusterer.AddClient(objects_publisher);
 
@@ -103,7 +114,7 @@ void ReadData(const Radians &angle_tollerance, const string &in_path,
         auto cloud_ptr = Cloud::FromImage(depth_image, *proj_params_ptr);
         time_utils::Timer timer;
         // visualizer->OnNewObjectReceived(*cloud_ptr, 0);
-        depth_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
+        ground_remover->OnNewObjectReceived(*cloud_ptr, 0);
         // tunnel_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
         auto current_millis = timer.measure(time_utils::Timer::Units::Milli);
         ROS_INFO("It took %lu ms to process and show everything.",
@@ -142,7 +153,6 @@ void run_from_path(ros::NodeHandle& nh_p, ros::NodeHandle& nh)
 
     // join thread after the application is dead
     loader_thread.join();
-
 }
 
 int main(int argc, char* argv[])
