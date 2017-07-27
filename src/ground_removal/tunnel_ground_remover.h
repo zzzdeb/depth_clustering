@@ -89,12 +89,12 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override;
 
   void RemoveGroundOBB(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
-  void RemoveGroundAABB(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
+  void RemoveGroundByHeight(const PointCloudT::Ptr& cloud_p,
+                            PointCloudT& gl_cloud);
 
   void PublishInfo(const PointCloudT& gl_cloud, const PointT& min_point_OBB,
-                   const PointT& max_point_OBB,
-                   const PointT& position_OBB = PointT(),
-                   const Eigen::Matrix3f& rot_M = Eigen::Matrix3f());
+                   const PointT& max_point_OBB, const Eigen::Matrix3f& rot_M,
+                   const PointT& position_OBB = PointT());
 
  protected:
   ros::NodeHandle _nh;
