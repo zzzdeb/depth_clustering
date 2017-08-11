@@ -28,17 +28,17 @@ node: {
     # height: 
     # sensor_height: 
 # }
-ground_remover: {
-  remover: "depth_ground_remover",
-  angle: 7.0,
-  smooth_window_size: 5
-}
 # ground_remover: {
-#   remover: "tunnel_ground_remover",
-#   smooth_window_size: 5,
-#   height: 0.3,
-#   sensor_height: 1.73
+#   remover: "depth_ground_remover",
+#   angle: 7.0,
+#   smooth_window_size: 5
 # }
+ground_remover: {
+  remover: "tunnel_ground_remover",
+  smooth_window_size: 5,
+  height: 0.3,
+  sensor_height: 1.73
+}
 
 # clusterer: {
 #   angle_tollerance: 10,

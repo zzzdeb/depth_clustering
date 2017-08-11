@@ -10,8 +10,8 @@ node: {
 ground_remover: {
   remover: "tunnel_ground_remover",
   smooth_window_size: 5,
-  heigth: 1.0,
-  sensor_height: 1.0
+  height: 0.2,
+  sensor_height: 1.5
 }
 clusterer: {
   angle_tollerance: 10,

@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <cmath>
 
 #include "image_labelers/diff_helpers/angle_diff.h"
 #include "image_labelers/diff_helpers/simple_diff.h"
@@ -28,12 +29,17 @@
 
 #include <ros/console.h>
 
+#include <iostream> //!!!
+
 namespace depth_clustering {
+
+using std::abs;
 
 using cv::Mat;
 using cv::DataType;
 using std::to_string;
 using time_utils::Timer;
+
 
 const cv::Point ANCHOR_CENTER = cv::Point(-1, -1);
 const int SAME_OUTPUT_TYPE = -1;
@@ -51,8 +57,8 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   Timer total_timer;
   PointCloudT::Ptr pcl_cloud_p = cloud.ToPcl();
   PointCloudT gl_pcl_p;
-  if (_use_obb)
-    RemoveGroundOBB(pcl_cloud_p, gl_pcl_p);
+  if (_use_pca)
+    RemoveGroundPCA(pcl_cloud_p, gl_pcl_p);
   else
     RemoveGroundByHeight(pcl_cloud_p, gl_pcl_p);
 
@@ -87,29 +93,25 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   _counter++;
 }
 
-void TunnelGroundRemover::RemoveGroundOBB(const PointCloudT::Ptr& cloud_p,
+void TunnelGroundRemover::RemoveGroundPCA(const PointCloudT::Ptr& cloud_p,
                                           PointCloudT& gl_cloud) {
-  pcl::PointXYZL min_point_OBB;
-  pcl::PointXYZL max_point_OBB;
-  pcl::PointXYZL position_OBB;
-  Eigen::Matrix3f rotational_matrix_OBB;
-
-  OrientedBoundingBox<pcl::PointXYZL> feature_extractor;
-  // feature_extractor.setAngleStep(20);  //!!! must be tuned
-  feature_extractor.setInputCloud(cloud_p);
   Timer timer;
-  feature_extractor.compute();
-  ROS_INFO("computing OBB took %lu us ", timer.measure());
-  feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
-                           rotational_matrix_OBB);
 
-  for (auto point : *cloud_p) {
-    if (point.z < -(_height - _sensor_h)) {
-      PointT p(point);
-      gl_cloud.push_back(p);
-    }
+  pcl::PCA<pcl::PointXYZL> pca;
+  // feature_extractor.setAngleStep(20);  //!!! must be tuned
+  pca.setInputCloud(cloud_p);
+  Eigen::Matrix3f eigen_vectors = pca.getEigenVectors();
+
+  ROS_INFO("executing PCA took %lu us ", timer.measure());
+
+  float z_axis = std::max(std::max(abs(eigen_vectors(0, 2)),abs(eigen_vectors(1, 2))), abs(eigen_vectors(2, 2)));
+
+    for (auto point : *cloud_p) {
+      if (point.z * z_axis < -(_height - _sensor_h)) {
+        PointT p(point);
+        gl_cloud.push_back(p);
+      }
   }
-  PublishInfo(gl_cloud, min_point_OBB, max_point_OBB, rotational_matrix_OBB, position_OBB);
 }
 
 void TunnelGroundRemover::RemoveGroundByHeight(const PointCloudT::Ptr& cloud_p,

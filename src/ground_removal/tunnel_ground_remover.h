@@ -29,6 +29,7 @@
 #include "utils/radians.h"
 
 #include <pcl/point_cloud.h>
+#include <pcl/common/pca.h>
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <ros/ros.h>
@@ -61,7 +62,7 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   explicit TunnelGroundRemover(ros::NodeHandle& nh,
                                const ProjectionParams& params, double height,
                                double sensor_h, int window_size = 5,
-                               bool use_obb = true)
+                               bool use_pca = true)
       : AbstractGroundRemover(),
         _nh{nh},
         _marker_pub{
@@ -73,7 +74,7 @@ class TunnelGroundRemover : public AbstractGroundRemover {
         _sensor_h{sensor_h},
         _smoother{params, window_size},
         _window_size{window_size},
-        _use_obb{use_obb} {
+        _use_pca{use_pca} {
     _nh.getParam("node/laser_frame", _frame_id);
   }
   virtual ~TunnelGroundRemover() {}
@@ -88,7 +89,7 @@ class TunnelGroundRemover : public AbstractGroundRemover {
    */
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override;
 
-  void RemoveGroundOBB(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
+  void RemoveGroundPCA(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
   void RemoveGroundByHeight(const PointCloudT::Ptr& cloud_p,
                             PointCloudT& gl_cloud);
 
@@ -108,7 +109,7 @@ class TunnelGroundRemover : public AbstractGroundRemover {
  private:
   double _height;
   double _sensor_h;
-  bool _use_obb;
+  bool _use_pca;
   int _window_size = 5;
   mutable int _counter = 0;
 };
