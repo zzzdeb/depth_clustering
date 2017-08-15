@@ -68,13 +68,9 @@ void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
   Cloud::Ptr groundless_cloud_p = cloud.FromPcl(gl_pcl_p);
   groundless_cloud_p->InitProjection(_params);
 
-  // debug
-  cv::imwrite("/home/zzz/Pictures/Gray_Image.jpg",
-              groundless_cloud_p->projection_ptr()->depth_image());
-
-  // debug
-  cv::imwrite("/home/zzz/Pictures/Gray_Image.jpg",
-              groundless_cloud_p->projection_ptr()->depth_image());
+  // // debug
+  // cv::imwrite("/home/zzz/Pictures/Gray_Image.jpg",
+  //             groundless_cloud_p->projection_ptr()->depth_image());
 
   cloud_copy.projection_ptr()->depth_image() =
       groundless_cloud_p->projection_ptr()->depth_image();
@@ -106,12 +102,23 @@ void TunnelGroundRemover::RemoveGroundPCA(const PointCloudT::Ptr& cloud_p,
 
   float z_axis = std::max(std::max(abs(eigen_vectors(0, 2)),abs(eigen_vectors(1, 2))), abs(eigen_vectors(2, 2)));
 
-    for (auto point : *cloud_p) {
-      if (point.z * z_axis < -(_height - _sensor_h)) {
-        PointT p(point);
-        gl_cloud.push_back(p);
-      }
+  PointCloudT ground_cloud;  // debug
+
+  for (auto point : *cloud_p) {
+    if (point.z * z_axis > (_height - _sensor_h)) {
+      PointT p(point);
+      gl_cloud.push_back(p);
+    } else {
+      PointT p(point);
+      ground_cloud.push_back(p);
+    }
   }
+  // debug
+  sensor_msgs::PointCloud2 cloud2;
+  pcl::toROSMsg(ground_cloud, cloud2);
+  cloud2.header.frame_id = _frame_id;
+  cloud2.header.stamp = ros::Time::now();
+  _cloud_pub.publish(cloud2);
 }
 
 void TunnelGroundRemover::RemoveGroundByHeight(const PointCloudT::Ptr& cloud_p,

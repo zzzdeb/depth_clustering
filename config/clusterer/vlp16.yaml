@@ -11,12 +11,19 @@ ground_remover: {
   remover: "tunnel_ground_remover",
   smooth_window_size: 5,
   height: 0.2,
-  sensor_height: 1.5
+  sensor_height: 0.5
 }
+
+# ground_remover: {
+#   remover: "depth_ground_remover",
+#   smooth_window_size: 5,
+#   angle: 10.0
+# }
+
 clusterer: {
-  angle_tollerance: 10,
+  angle_tollerance: 20,
   min_cluster_size: 20,
-  max_cluster_size: 100000
+  max_cluster_size: 25000
 }
 
 cloud_publisher: {
@@ -26,7 +33,7 @@ cloud_publisher: {
 
 objects_publisher: {
   topic_name: "segmented_objects",
-  use_axial_bounding_box: true,
+  use_axial_bounding_box: false,
   frame_id: "/velodyne"
 }
 
