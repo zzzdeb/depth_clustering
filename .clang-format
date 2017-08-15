@@ -45,7 +45,7 @@ SpacesBeforeTrailingComments: 2
 Cpp11BracedListStyle: true
 Standard:        Auto
 IndentWidth:     2
-TabWidth:        8
+TabWidth:        12
 UseTab:          Never
 BreakBeforeBraces: Attach
 SpacesInParentheses: false

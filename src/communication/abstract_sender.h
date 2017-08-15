@@ -24,6 +24,8 @@
 #include "communication/identifiable.h"
 #include "communication/abstract_client.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 enum class SenderType {
@@ -69,7 +71,7 @@ class AbstractSender : public virtual Identifiable {
    */
   void AddClient(AbstractClient<ObjSendType>* client) {
     if (_type == SenderType::UNDEFINED) {
-      fprintf(stderr, "ERROR: class %s (id: %d) has UNDEFINED type;\n",
+      ROS_ERROR("class %s (id: %d) has UNDEFINED type;\n",
               this->guess_class_name().c_str(), this->id());
       fprintf(stderr, "\tSet type in AbstractClient constructor;\n");
       fprintf(stderr, "\tType must be one of enum %s:\n",
@@ -98,7 +100,7 @@ class AbstractSender : public virtual Identifiable {
    */
   void RemoveClient(int id) {
     if (_clients.find(id) == _clients.end()) {
-      fprintf(stderr, "Error: no such client to delete: %d\n", id);
+      ROS_INFO("no such client to delete: %d", id);
       return;
     }
     auto* client = _clients[id];

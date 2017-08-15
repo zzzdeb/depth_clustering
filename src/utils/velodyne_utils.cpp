@@ -28,6 +28,8 @@
 
 #include "utils/cloud.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 using std::string;
@@ -35,7 +37,7 @@ using std::vector;
 
 Cloud::Ptr ReadKittiCloudTxt(const string& path) {
   std::locale::global(std::locale("en_US.UTF-8"));
-  fprintf(stderr, "Reading cloud from %s.\n", path.c_str());
+  ROS_INFO("Reading cloud from %s.", path.c_str());
   auto cloud_ptr = Cloud::Ptr(new Cloud);
   std::ifstream file(path.c_str());
   for (std::string line; std::getline(file, line, '\n');) {
@@ -43,7 +45,7 @@ Cloud::Ptr ReadKittiCloudTxt(const string& path) {
     vector<string> coords_str;
     boost::split(coords_str, line, boost::is_any_of(" "));
     if (coords_str.size() != 4) {
-      fprintf(stderr, "ERROR: format of line is wrong.\n");
+      ROS_ERROR("format of line is wrong.");
       continue;
     }
     RichPoint point;

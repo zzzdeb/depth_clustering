@@ -29,8 +29,15 @@
 
 /doc/latex/
 
+<<<<<<< HEAD
 /.vscode/
 
 /notebooks/
 
+=======
+/notebooks/
+
+/.vscode/
+
+>>>>>>> origin/pca
 notebooks/.ipynb_checkpoints/*

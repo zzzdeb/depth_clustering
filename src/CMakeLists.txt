@@ -1,10 +1,23 @@
 add_subdirectory(communication)
 add_subdirectory(ground_removal)
 add_subdirectory(image_labelers)
-add_subdirectory(visualization)
 add_subdirectory(projections)
 add_subdirectory(utils)
+add_subdirectory(ros_bridge)
 
-if(ROS_FOUND)
-  add_subdirectory(ros_bridge)
-endif()
+find_package(catkin REQUIRED COMPONENTS
+            roscpp
+            )
+
+add_executable(depth_clusterer depth_clusterer.cpp)
+target_link_libraries(depth_clusterer
+                        identifiable
+                        image_labeler
+                        velodyne_utils
+                        projections
+                        ground_remove
+                        tunnel_ground_removal
+                        folder_reader
+                        ros_visualizer
+                        ros_bridge
+                        ${catkin_LIBRARIES})

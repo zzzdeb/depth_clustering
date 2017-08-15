@@ -5,12 +5,14 @@
   <description>The depth_clustering package</description>
 
   <maintainer email="igor.bogoslavskyi@uni-bonn.de">Igor Bogoslavskyi</maintainer>
+  <maintainer email="zolboo.erdenebayar@rwth-aachen.de">>Zolboo Erdenebayar</maintainer>
 
   <license>GPLv3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>message_filters</build_depend>
@@ -19,8 +21,9 @@
 
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
+  <run_depend>visualization_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>    
   <run_depend>message_filters</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>eigen_conversions</run_depend>

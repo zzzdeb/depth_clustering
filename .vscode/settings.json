@@ -38,8 +38,8 @@
         "codecvt": "cpp",
         "condition_variable": "cpp",
         "memory": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "string": "cpp"
     },
-    "C_Cpp.clang_format_path": "/home/upns/zzz/software/clang4/bin/clang-format",
     "editor.formatOnType": true
 }

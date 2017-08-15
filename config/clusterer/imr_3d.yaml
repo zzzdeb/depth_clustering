@@ -1,0 +1,32 @@
+#Parameters for IMR Reichezech data
+lidar_config_link: "/home/upns/zzz/algorithms/src/depth_clustering/config/projection/imr.cfg"
+
+node: {
+  fixed_frame: "/platform_laser_rotation/base/rotation_center",
+  cloud_frame_id: "/platform_laser_rotation/base/rotation_center",
+  topic_clouds: "/assembled_laser",
+  num_thread: 1
+}
+ground_remover: {
+  remover: "depth_ground_remover",
+  angle: 7.0,
+  smooth_window_size: 5
+}
+clusterer: {
+  angle_tollerance: 10,
+  min_cluster_size: 20,
+  max_cluster_size: 100000
+}
+
+cloud_publisher: {
+  topic_name: "segmented_cloud",
+  frame_id: "/platform_laser_rotation/base/rotation_center"
+}
+
+objects_publisher: {
+  topic_name: "segmented_objects",
+  use_axial_bounding_box: false,
+  frame_id: "/platform_laser_rotation/base/rotation_center"
+}
+
+

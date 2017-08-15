@@ -25,6 +25,9 @@
 
 #include "utils/mem_utils.h"
 
+#include <ros/console.h>
+#include <ros/assert.h>
+
 namespace depth_clustering
 {
 
@@ -115,7 +118,7 @@ const Radians ProjectionParams::AngleFromRow(int row) const
   {
     return _row_angles[row];
   }
-  fprintf(stderr, "ERROR: row %d is wrong\n", row);
+  ROS_ERROR("row %d is wrong", row);
   return 0.0_deg;
 }
 
@@ -179,7 +182,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::VLP_16()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -195,7 +198,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::HDL_32()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -213,7 +216,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::HDL_64()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -229,7 +232,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::IMR_LaserScanner()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -245,7 +248,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::Husky_2d()
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -262,7 +265,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FullSphere(
   params.FillCosSin();
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: params are not valid!\n");
+    ROS_ERROR("params are not valid!");
     return nullptr;
   }
   return mem_utils::make_unique<ProjectionParams>(params);
@@ -271,16 +274,16 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FullSphere(
 std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
     const std::string &path)
 {
-  fprintf(stderr, "INFO: Set en_US.UTF-8 locale.\n");
+  ROS_INFO("Set en_US.UTF-8 locale.");
   std::locale::global(std::locale("en_US.UTF-8"));
-  fprintf(stderr, "INFO: Reading config.\n");
+  ROS_INFO("Reading config.");
   ProjectionParams params;
   // we need to fill this thing. Parsing text files again. Is that what PhD in
   // Robotics is about?
   std::ifstream file(path.c_str());
   if (!file.is_open())
   {
-    fprintf(stderr, "ERROR: cannot open file: '%s'\n", path.c_str());
+    ROS_ERROR("cannot open file: '%s'", path.c_str());
     return nullptr;
   }
   for (std::string line; std::getline(file, line, '\n');)
@@ -288,7 +291,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
     if (starts_with(line, "#"))
     {
       // we have found a commentary
-      fprintf(stderr, "INFO: Skipping commentary: \n\t %s\n", line.c_str());
+      ROS_INFO("Skipping commentary: \n\t %s", line.c_str());
     }
     else
     {
@@ -297,7 +300,7 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
       boost::split(str_angles, line, boost::is_any_of(";"));
       if (str_angles.size() < 4)
       {
-        fprintf(stderr, "ERROR: format of line is wrong.\n");
+        ROS_ERROR("format of line is wrong.");
         return nullptr;
       }
       int cols = std::stoi(str_angles[0]);
@@ -305,34 +308,63 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
       params._h_span_params =
           SpanParams(Radians::FromDegrees(std::stod(str_angles[2])),
                      Radians::FromDegrees(std::stod(str_angles[3])), cols);
-      fprintf(stderr, "start:%f, stop:%f, span:%f, step:%f\n",
+      ROS_INFO("start:%f, stop:%f, span:%f, step:%f",
               params._h_span_params.start_angle().ToDegrees(),
               params._h_span_params.end_angle().ToDegrees(),
               params._h_span_params.span().ToDegrees(),
               params._h_span_params.step().ToDegrees());
 
-      // fill the cols spacing
-      for (int c = 0; c < cols; ++c)
+          // fill the cols spacing
+          for (int c = 0; c < cols; ++c)
+          {
+            params._col_angles.push_back(params._h_span_params.start_angle() +
+                                        params._h_span_params.step() * c);
+          }
+      switch(str_angles.size())
       {
-        params._col_angles.push_back(params._h_span_params.start_angle() +
-                                     params._h_span_params.step() * c);
+        case 6:
+          params._v_span_params =
+          SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
+                     Radians::FromDegrees(std::stod(str_angles[5])), rows);
+
+          // fill the rows spacing
+          for (int r = 0; r < rows; ++r)
+          {
+            params._row_angles.push_back(params._v_span_params.start_angle() +
+                                        params._v_span_params.step() * r);
+          }
+          break;
+        case 5:
+          ROS_ASSERT(cols==1);
+          params._v_span_params =
+              SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
+                          Radians::FromDegrees(std::stod(str_angles[4])+1), rows);
+          
+          // fill the rows spacing
+          for (int r = 0; r < rows; ++r)
+          {
+            params._row_angles.push_back(params._v_span_params.start_angle() +
+                                        params._v_span_params.step() * r);
+          }
+          break;
+        default:
+          // fill the rows
+          params._v_span_params =
+              SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
+              Radians::FromDegrees(std::stod(str_angles.back())), rows);
+          // fill the rows with respect to img.cfg spacings
+          for (size_t i = 4; i < str_angles.size(); ++i)
+          {
+            params._row_angles.push_back(
+                Radians::FromDegrees(std::stof(str_angles[i])));
+          }
+          if (params._row_angles.size() != static_cast<size_t>(rows))
+          {
+            ROS_ERROR("wrong config");
+            return nullptr;
+          }
       }
 
-      // fill the rows
-      params._v_span_params =
-          SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
-                     Radians::FromDegrees(std::stod(str_angles.back())), rows);
-      // fill the rows with respect to img.cfg spacings
-      for (size_t i = 4; i < str_angles.size(); ++i)
-      {
-        params._row_angles.push_back(
-            Radians::FromDegrees(std::stof(str_angles[i])));
-      }
-      if (params._row_angles.size() != static_cast<size_t>(rows))
-      {
-        fprintf(stderr, "ERROR: wrong config\n");
-        return nullptr;
-      }
     }
   }
   // fill cos and sin arrays
@@ -340,10 +372,10 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
   // check validity
   if (!params.valid())
   {
-    fprintf(stderr, "ERROR: the config read was not valid.\n");
+    ROS_ERROR("the config read was not valid.");
     return nullptr;
   }
-  fprintf(stderr, "INFO: Params sucessfully read. Rows: %lu, Cols: %lu\n",
+  ROS_INFO("Params sucessfully read. Rows: %lu, Cols: %lu",
           params._row_angles.size(), params._col_angles.size());
   return mem_utils::make_unique<ProjectionParams>(params);
 }

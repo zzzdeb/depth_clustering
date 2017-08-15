@@ -24,6 +24,8 @@
 #include "image_labelers/diff_helpers/simple_diff.h"
 #include "utils/mem_utils.h"
 
+#include <ros/console.h>
+
 namespace depth_clustering {
 
 class DiffFactory {
@@ -66,7 +68,7 @@ class DiffFactory {
         break;
       }
       case DiffType::NONE: {
-        fprintf(stderr, "ERROR: DiffType is NONE. Please set it.\n");
+        ROS_ERROR("DiffType is NONE. Please set it.\n");
         break;
       }
     }

@@ -26,6 +26,9 @@
 #include "utils/radians.h"
 #include "utils/cloud.h"
 
+#include "ground_removal/abstract_ground_remover.h"
+#include "utils/savitsky_golay_smoothing.h"
+
 namespace depth_clustering {
 
 /**
@@ -36,8 +39,8 @@ namespace depth_clustering {
  *
  * @param      params  projection params
  */
-class DepthGroundRemover : public AbstractClient<Cloud>,
-                           public AbstractSender<Cloud> {
+class DepthGroundRemover : public AbstractGroundRemover {
+                           
   using ClientT = AbstractClient<Cloud>;
   using SenderT = AbstractSender<Cloud>;
 
@@ -45,11 +48,12 @@ class DepthGroundRemover : public AbstractClient<Cloud>,
   explicit DepthGroundRemover(const ProjectionParams& params,
                               const Radians& ground_remove_angle,
                               int window_size = 5)
-      : ClientT{},
-        SenderT{SenderType::STREAMER},
+      : AbstractGroundRemover{},
         _params{params},
         _window_size{window_size},
-        _ground_remove_angle{ground_remove_angle} {}
+        _ground_remove_angle{ground_remove_angle},
+        _smoother{params, window_size}
+        {}
   virtual ~DepthGroundRemover() {}
 
   /**
@@ -62,7 +66,7 @@ class DepthGroundRemover : public AbstractClient<Cloud>,
    */
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override;
 
- protected:
+
   /**
    * @brief      Zero out all pixels that belong to ground
    *
@@ -86,56 +90,12 @@ class DepthGroundRemover : public AbstractClient<Cloud>,
    * @return     [32 bit float image with angle in radians written in every
    *             pixel]
    */
-  cv::Mat CreateAngleImage(const cv::Mat& depth_image);
 
-  /**
-   * @brief      Get kernel for Savitsky-Golay filter
-   * @details    Get a column filter to process an image filled with data with
-   *             Savitsky-Golay filter
-   *
-   * @param      window_size  size of the kernel
-   * @return     column Mat kernel
-   */
-  cv::Mat GetSavitskyGolayKernel(int window_size) const;
-  cv::Mat GetUniformKernel(int window_size, int type = CV_32F) const;
-
-  /**
-   * @brief      Apply Savitsky-Golay smoothing to a column
-   * @param      column  [A column of an angle image]
-   * @return     [a smoothed column]
-   */
-
-  cv::Mat ApplySavitskyGolaySmoothing(const cv::Mat& column, int window_size);
-  /**
-   * @brief      Get line angle
-   * @details    Given two depth values and their angles compute the angle of
-   *             the line that they spawn in the sensor frame.
-   *
-   * @param      depth_image  [32 bit float image]
-   * @param      col          [current column]
-   * @param      row_curr     [current row]
-   * @param      row_neigh    [neighbor row]
-   * @return     [angle of the line]
-   */
-  Radians GetLineAngle(const cv::Mat& depth_image, int col, int row_curr,
-                       int row_neigh);
-
-  /**
-   * @brief      Repair zeros in the depth image
-   *
-   * @param[in]  depth_image  The depth image
-   *
-   * @return     depth image with repaired values
-   */
-  cv::Mat RepairDepth(const cv::Mat& no_ground_image, int step,
-                      float depth_threshold);
-
-  cv::Mat RepairDepth(const cv::Mat& depth_image);
-
+ protected:
   ProjectionParams _params;
   int _window_size = 5;
   Radians _ground_remove_angle = 5_deg;
-  float _eps = 0.001f;
+  SavitskyGolaySmoothing _smoother;
 
   mutable int _counter = 0;
 };
