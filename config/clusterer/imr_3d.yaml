@@ -1,5 +1,5 @@
 #Parameters for IMR Reichezech data
-lidar_config_link: "/home/upns/zzz/algorithms/src/depth_clustering/config/projection/imr.cfg"
+lidar_config_link: "/config/projection/imr.cfg"
 
 node: {
   laser_frame_id: "/platform_laser_rotation/base/rotation_center",

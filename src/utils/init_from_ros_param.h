@@ -17,7 +17,7 @@ bool InitFromRosParam(const ros::NodeHandle& nh, const string& param, A& a) {
   if (res)
     ROS_INFO_STREAM(param << " : " << a);
   else
-    ROS_ERROR("could not find %s", param);
+    ROS_ERROR_STREAM("could not find "<< param);
   return res;
 }
 

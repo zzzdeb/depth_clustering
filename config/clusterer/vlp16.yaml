@@ -1,5 +1,5 @@
 #Parameters for IMR Reichezech data
-lidar_config_link: "/home/zzz/ros/algorithms/src/depth_clustering/config/projection/vlp16.cfg"
+lidar_config_link: "/config/projection/vlp16.cfg"
 
 node: {
   laser_frame_id: "/velodyne",

@@ -23,6 +23,8 @@
 #include "ros_bridge/objects_publisher.h"
 #include "ros_bridge/ros_visualizer.h"
 
+#include "../config/cmake_config.h"
+
 using std::string;
 using std::vector;
 
@@ -139,6 +141,8 @@ int main(int argc, char* argv[]) {
   //ProjectionParam from file
   string lidar_config_link;
   InitFromRosParam<string>(nh_p, "lidar_config_link", lidar_config_link);
+  lidar_config_link = SOURCE_PATH + lidar_config_link;
+  ROS_INFO_STREAM("Absolute lidar_config link: "<< lidar_config_link);
   auto proj_params_ptr = ProjectionParams::FromConfigFile(lidar_config_link);
 
   CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);

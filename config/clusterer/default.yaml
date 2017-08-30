@@ -2,6 +2,7 @@
 
 # erase from_path parameter if you dont run it from Moosmann's dataset.
 from_path: "/home/zzz/ros/algorithms/data/scenario1" 
+# lidar_config_link: relative path to config file. Example: "/config/projection/vlp16.cfg"
 
 # node: {
 #   laser_frame_id: ros laser frame_id

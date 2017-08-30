@@ -1,6 +1,6 @@
 #Parameters for husky bag file recorded by me
 
-lidar_config_link: "/home/upns/zzz/algorithms/src/depth_clustering/config/projection/husky.cfg"
+lidar_config_link: "/config/projection/husky.cfg"
 
 node: {
   topic_clouds: "/front/scan/cloud",
