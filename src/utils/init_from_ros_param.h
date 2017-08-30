@@ -23,7 +23,7 @@ bool InitFromRosParam(const ros::NodeHandle& nh, const string& param, A& a) {
 
 template <class A>
 bool InitFromRosParam(const ros::NodeHandle& nh, const string& param, A& a, const A& b) {
-  bool res = nh.param(param, a, b);
+  bool res = nh.param<A>(param, a, b);
   if (res)
     ROS_INFO_STREAM(param << " : " << a);
   else 

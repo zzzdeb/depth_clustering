@@ -61,8 +61,8 @@ void ReadData(const Radians& angle_tollerance, const string& in_path,
 
   // Ground_remover
   AbstractGroundRemover* ground_remover;
-  string remover;
-  if (InitFromRosParam<string>(*nh, "ground_remover/remover", remover, "No Groundremover"))
+  string remover = "No Groundremover";
+  if (InitFromRosParam<string>(*nh, "ground_remover/remover", remover))
   {
     if (remover == "depth_ground_remover") {
       int smooth_window_size;
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 
   //Angle tollerance for segmentation. Default value: 10 Degree
   double angle_arg;
-  InitFromRosParam<double>(nh_p, "clusterer/angle_tollerance", angle_arg, 10.0);
+  InitFromRosParam<double>(nh_p, "clusterer/angle_tollerance", angle_arg);
   Radians angle_tollerance = Radians::FromDegrees(angle_arg);
 
   RosVisualizer visualizer(nh_p);
@@ -161,8 +161,8 @@ int main(int argc, char* argv[]) {
 
   // Ground_remover
   AbstractGroundRemover* ground_remover;
-  string remover;
-  if (!InitFromRosParam<string>(nh_p, "ground_remover/remover", remover, "No Groundremover"))
+  string remover = "No Groundremover";
+  if (!InitFromRosParam<string>(nh_p, "ground_remover/remover", remover))
     subscriber.AddClient(&clusterer);
   else {
     if (remover == "depth_ground_remover") {
