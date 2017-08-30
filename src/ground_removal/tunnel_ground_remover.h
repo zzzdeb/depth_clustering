@@ -74,9 +74,10 @@ class TunnelGroundRemover : public AbstractGroundRemover {
         _sensor_h{sensor_h},
         _smoother{params, window_size},
         _window_size{window_size},
-        _use_pca{use_pca} {
-    _nh.getParam("node/cloud_frame_id", _frame_id);
-  }
+        _use_pca{use_pca} 
+    {
+        _nh.getParam("node/laser_frame_id", _frame_id);
+    }
   virtual ~TunnelGroundRemover() {}
 
   /**

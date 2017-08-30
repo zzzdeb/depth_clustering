@@ -1,4 +1,5 @@
 #include "objects_publisher.h"
+#include "../utils/init_from_ros_param.h"
 
 using std::pair;
 using std::unordered_map;
@@ -11,15 +12,10 @@ namespace depth_clustering {
 
 ObjectsPublisher::ObjectsPublisher(ros::NodeHandle& nh)
 {
-  ObjectsPublisher();
   _nh = nh;
   _objects_pub = _nh.advertise<MarkerArray>("segmented_objects", 1);
-  
-  if(!nh.getParam("objects_publisher/frame_id", _frame_id)) 
-    ROS_ERROR("couldnt find objects_publisher/frame_id");
-
-  if (!nh.getParam("objects_publisher/use_axial_bounding_box", _use_abb))
-    ROS_ERROR("couldnt find objects_publisher/use_axial_bounding_box");
+  InitFromRosParam(nh, "node/laser_frame_id", _frame_id);
+  InitFromRosParam(nh, "objects_publisher/use_axial_bounding_box", _use_abb);
 }
 
 void ObjectsPublisher::OnNewObjectReceived(

@@ -28,8 +28,7 @@ RosVisualizer::RosVisualizer(ros::NodeHandle& nh)
 {
     _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
     _image_pub = _nh.advertise<sensor_msgs::Image>("depth_image", 1);
-    if(!nh.getParam("objects_publisher/frame_id", _frame_id)) 
-        ROS_ERROR("couldnt find objects_publisher/frame_id");
+    nh.getParam("node/laser_frame_id", _frame_id);
 }
 
 RosVisualizer::~RosVisualizer() {}

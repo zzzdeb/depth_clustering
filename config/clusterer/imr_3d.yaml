@@ -2,8 +2,7 @@
 lidar_config_link: "/home/upns/zzz/algorithms/src/depth_clustering/config/projection/imr.cfg"
 
 node: {
-  fixed_frame: "/platform_laser_rotation/base/rotation_center",
-  cloud_frame_id: "/platform_laser_rotation/base/rotation_center",
+  laser_frame_id: "/platform_laser_rotation/base/rotation_center",
   topic_clouds: "/assembled_laser",
   num_thread: 1
 }
@@ -19,14 +18,12 @@ clusterer: {
 }
 
 cloud_publisher: {
-  topic_name: "segmented_cloud",
-  frame_id: "/platform_laser_rotation/base/rotation_center"
+  topic_name: "segmented_cloud"
 }
 
 objects_publisher: {
   topic_name: "segmented_objects",
-  use_axial_bounding_box: false,
-  frame_id: "/platform_laser_rotation/base/rotation_center"
+  use_axial_bounding_box: false
 }
 
 

@@ -314,19 +314,22 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
               params._h_span_params.span().ToDegrees(),
               params._h_span_params.step().ToDegrees());
 
-          // fill the cols spacing
-          for (int c = 0; c < cols; ++c)
-          {
-            params._col_angles.push_back(params._h_span_params.start_angle() +
-                                        params._h_span_params.step() * c);
-          }
+      // fill the cols spacing
+      for (int c = 0; c < cols; ++c)
+      {
+        params._col_angles.push_back(params._h_span_params.start_angle() +
+                                    params._h_span_params.step() * c);
+      }
+
       switch(str_angles.size())
       {
         case 6:
-          params._v_span_params =
-          SpanParams(Radians::FromDegrees(std::stod(str_angles[4])),
-                     Radians::FromDegrees(std::stod(str_angles[5])), rows);
-
+          double start, end;
+          start = std::stod(str_angles[4]);
+          end = std::stod(str_angles[5]);
+          if (!(start == 180.0 && end == -180.0)) end += (end - start) / (rows-1);
+          params._v_span_params = SpanParams(Radians::FromDegrees(start),
+                                             Radians::FromDegrees(end), rows);
           // fill the rows spacing
           for (int r = 0; r < rows; ++r)
           {
@@ -364,6 +367,11 @@ std::unique_ptr<ProjectionParams> ProjectionParams::FromConfigFile(
             return nullptr;
           }
       }
+      ROS_INFO("start:%f, stop:%f, span:%f, step:%f",
+        params._v_span_params.start_angle().ToDegrees(),
+        params._v_span_params.end_angle().ToDegrees(),
+        params._v_span_params.span().ToDegrees(),
+        params._v_span_params.step().ToDegrees());
 
     }
   }

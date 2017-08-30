@@ -4,41 +4,37 @@
 from_path: "/home/zzz/ros/algorithms/data/scenario1" 
 
 # node: {
-#   fixed_frame: ros fixed frame_id
-#   laser_frame: ros laser frame_id
-#   cloud_frame_id: frame_id 
-#   topic_clouds: 
+#   laser_frame_id: ros laser frame_id
+#   topic_clouds: topic to subscribe
 #   num_thread: num of threads
 # }
 node: {
-  fixed_frame: "world",
-  laser_frame: "world",
-  cloud_frame_id: "",
+  laser_frame_id: "world",
   topic_clouds: "",
   num_thread: 1
 }
 # ground_remover: {
 #   1.     
     # remover: "depth_ground_remover",
-    # angle: 7.0,
-    # smooth_window_size: 5
+    # angle: ground_remove_angle,
+    # smooth_window_size: argument for picture smoother
 #   2.
     # remover: "tunnel_ground_remover",
     # smooth_window_size: 7.0,
     # height: 
     # sensor_height: 
 # }
-# ground_remover: {
-#   remover: "depth_ground_remover",
-#   angle: 7.0,
-#   smooth_window_size: 5
-# }
 ground_remover: {
-  remover: "tunnel_ground_remover",
-  smooth_window_size: 5,
-  height: 0.3,
-  sensor_height: 1.73
+  remover: "depth_ground_remover",
+  angle: 7.0,
+  smooth_window_size: 5
 }
+# ground_remover: {
+#   remover: "tunnel_ground_remover",
+#   smooth_window_size: 5,
+#   height: 0.3,
+#   sensor_height: 1.73
+# }
 
 # clusterer: {
 #   angle_tollerance: 10,
@@ -59,14 +55,12 @@ cloud_publisher: {
 }
 
 # objects_publisher: {
-#   topic_name: "segmented_objects",
-#   use_axial_bounding_box: false,
-#   frame_id: "world"
+#   topic_name: for publisher,
+#   use_axial_bounding_box: 
 # }
 objects_publisher: {
   topic_name: "segmented_objects",
-  use_axial_bounding_box: false,
-  frame_id: "world"
+  use_axial_bounding_box: false
 }
 
 

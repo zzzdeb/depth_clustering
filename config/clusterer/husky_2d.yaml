@@ -3,8 +3,6 @@
 lidar_config_link: "/home/upns/zzz/algorithms/src/depth_clustering/config/projection/husky.cfg"
 
 node: {
-  fixed_frame: "map",
-  cloud_frame_id: "front_laser",
   topic_clouds: "/front/scan/cloud",
   num_thread: 1
 }
@@ -21,8 +19,7 @@ cloud_publisher: {
 
 objects_publisher: {
   topic_name: "segmented_objects",
-  use_axial_bounding_box: true,
-  frame_id: "front_laser" # work on tf. otherwise it cant be different from laser frame
+  use_axial_bounding_box: true
 }
 
 
