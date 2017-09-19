@@ -138,7 +138,8 @@ catkin_package(
  LIBRARIES
       cloud
       identifiable
-      ground_remove
+      depth_ground_remover
+      tunnel_ground_remover
       difference
       image_labeler
       projections

@@ -1,4 +1,4 @@
-// Copyright (C) 2017  I. Bogoslavskyi, C. Stachniss, University of Bonn
+// Copyright (C) 2017  E. Zolboo, RWTH Aachen
 
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -53,9 +53,6 @@ public:
                            const int id) override;
   
   virtual ~ObjectsPublisher() {}
-
-  void MinBB(const pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_ptr,
-            std::pair<geometry_msgs::Pose, geometry_msgs::Vector3>& transfromation);
 
   void MinRecArea(const pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_ptr,
             std::pair<geometry_msgs::Pose, geometry_msgs::Vector3>& transfromation);

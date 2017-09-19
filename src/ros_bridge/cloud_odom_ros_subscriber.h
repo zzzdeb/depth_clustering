@@ -16,19 +16,19 @@
 #ifndef SRC_ROS_BRIDGE_CLOUD_ODOM_ROS_SUBSCRIBER_H_
 #define SRC_ROS_BRIDGE_CLOUD_ODOM_ROS_SUBSCRIBER_H_
 
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
+#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <nav_msgs/Odometry.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
 
-#include <string>
 #include <map>
+#include <string>
 
 #include "communication/abstract_sender.h"
-#include "utils/pose.h"
 #include "utils/cloud.h"
+#include "utils/pose.h"
 #include "utils/useful_typedefs.h"
 
 namespace depth_clustering {
@@ -46,8 +46,7 @@ class CloudOdomRosSubscriber : public AbstractSender<Cloud> {
   CloudOdomRosSubscriber(ros::NodeHandle* node_handle,
                          const ProjectionParams& params,
                          const std::string& topic_clouds,
-                         const std::string& topic_odom = "",
-                         bool without_projection = false);
+                         const std::string& topic_odom = "");
   virtual ~CloudOdomRosSubscriber() {
     delete _subscriber_odom;
     delete _subscriber_clouds;
@@ -75,11 +74,6 @@ class CloudOdomRosSubscriber : public AbstractSender<Cloud> {
    */
   void StartListeningToRos();
 
-  /**
-   * @brief      Publishing cloud withoud projection
-   */
-  void WithoutProjection() {_without_projection=true;}
-
  protected:
   Pose RosOdomToPose(const OdometryT::ConstPtr& msg);
   Cloud::Ptr RosCloudToCloud(const PointCloudT::ConstPtr& msg);
@@ -94,7 +88,6 @@ class CloudOdomRosSubscriber : public AbstractSender<Cloud> {
 
   ProjectionParams _params;
 
-  bool _without_projection;
   int _msg_queue_size;
 };
 

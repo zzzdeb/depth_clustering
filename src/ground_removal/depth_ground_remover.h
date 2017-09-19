@@ -23,8 +23,8 @@
 #include "communication/abstract_client.h"
 #include "communication/abstract_sender.h"
 #include "projections/projection_params.h"
-#include "utils/radians.h"
 #include "utils/cloud.h"
+#include "utils/radians.h"
 
 #include "ground_removal/abstract_ground_remover.h"
 #include "utils/savitsky_golay_smoothing.h"
@@ -40,7 +40,6 @@ namespace depth_clustering {
  * @param      params  projection params
  */
 class DepthGroundRemover : public AbstractGroundRemover {
-                           
   using ClientT = AbstractClient<Cloud>;
   using SenderT = AbstractSender<Cloud>;
 
@@ -52,8 +51,7 @@ class DepthGroundRemover : public AbstractGroundRemover {
         _params{params},
         _window_size{window_size},
         _ground_remove_angle{ground_remove_angle},
-        _smoother{params, window_size}
-        {}
+        _smoother{params, window_size} {}
   virtual ~DepthGroundRemover() {}
 
   /**
@@ -65,7 +63,6 @@ class DepthGroundRemover : public AbstractGroundRemover {
    * @param      sender_id    id of the sender
    */
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override;
-
 
   /**
    * @brief      Zero out all pixels that belong to ground

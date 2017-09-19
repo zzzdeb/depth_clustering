@@ -1,3 +1,18 @@
+// Copyright (C) 2017  E. Zolboo, RWTH Aachen
+
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #include "./ros_visualizer.h"
 
 namespace depth_clustering
@@ -29,6 +44,8 @@ RosVisualizer::RosVisualizer(ros::NodeHandle& nh)
     _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
     _image_pub = _nh.advertise<sensor_msgs::Image>("depth_image", 1);
     nh.getParam("node/laser_frame_id", _frame_id);
+    nh.getParam("clusterer/min_cluster_size", _min_cluster_size);
+    nh.getParam("clusterer/max_cluster_size", _max_cluster_size);
 }
 
 RosVisualizer::~RosVisualizer() {}
@@ -44,7 +61,7 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud, const cv::Mat& label_im
 {
     // label cloud from image labels
     vector<vector<int>> labels(0);
-    cv::Mat a = label_image;
+    // cv::Mat a = label_image;
     for (int row = 0; row < label_image.rows; ++row)
     {
         for (int col = 0; col < label_image.cols; ++col)
@@ -59,6 +76,12 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud, const cv::Mat& label_im
             if (label < 1)
             {
                 // this is a default label, skip
+                //!!! debug
+                // it shows all objects labeled with 0
+                for (const auto &point_idx : point_container.points())
+                {
+                  pcl_cloud->at(point_idx).z -= 10;
+                }
                 continue;
             }
 
@@ -70,13 +93,14 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud, const cv::Mat& label_im
             }
         }
     }
+    
     // filter out unfitting clusters
     for (unsigned int i = 0; i < labels.size(); i++)
-        if (labels[i].size() > 20 && labels[i].size() < 50000)
-        {
-            for (auto ind : labels[i])
-                pcl_cloud->at(ind).label = i;
-        }
+    if (labels[i].size() > _min_cluster_size && labels[i].size() < _max_cluster_size)
+    {
+        for (auto ind : labels[i])
+            pcl_cloud->at(ind).label = i;
+    }
 }
 
 
@@ -106,7 +130,7 @@ void RosVisualizer::fromCloudToPCL(PointCloudT::Ptr pcl_cloud, const Cloud &clou
 
 void RosVisualizer::OnNewObjectReceived(const std::pair<Cloud::Ptr, cv::Mat> &cloud_pair, const int id)
 {
-    PointCloudT::Ptr cloud = cloud_pair.first->ToPcl(); 
+    PointCloudT::Ptr cloud = cloud_pair.first->ToPcl();
     LabelPCL(cloud, cloud_pair.second, *cloud_pair.first);
     PubCloud(*cloud);
     PubImage(cloud_pair.second);

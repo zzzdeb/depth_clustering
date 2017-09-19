@@ -1,3 +1,18 @@
+// Copyright (C) 2017  E. Zolboo, RWTH Aachen
+
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #ifndef _ROS_VISUALIZER_
 #define _ROS_VISUALIZER_
 
@@ -46,18 +61,18 @@ public:
   void fromCloudToPCL(PointCloudT::Ptr pcl_cloud, const Cloud &cloud);
 
 protected:
-  void draw();
-
-private:
-  void PubImage(const cv::Mat& label_image);
-  void PubCloud(const PointCloudT &cloud);
-
-  std::string _frame_id;
-
-protected:
   ros::NodeHandle _nh;
   ros::Publisher _image_pub;
   ros::Publisher _cloud_pub;
+  
+private:
+
+  void PubImage(const cv::Mat& label_image);
+  void PubCloud(const PointCloudT &cloud);
+  
+  std::string _frame_id;
+  int _min_cluster_size;
+  int _max_cluster_size;
 };
 
 } // namespace depth_clustering

@@ -28,7 +28,7 @@ target_link_libraries(depth_clustering_test
                     identifiable
                     projections
                     image_labeler
-                    ground_remove
+                    depth_ground_remover
                     difference
                     ${catkin_LIBRARIES}
                     ${PCL_LIBRARIES}

@@ -15,8 +15,8 @@ target_link_libraries(depth_clusterer
                         image_labeler
                         velodyne_utils
                         projections
-                        ground_remove
-                        tunnel_ground_removal
+                        depth_ground_remover
+                        tunnel_ground_remover
                         folder_reader
                         ros_visualizer
                         ros_bridge

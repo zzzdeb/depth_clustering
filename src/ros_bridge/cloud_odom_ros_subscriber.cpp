@@ -16,9 +16,9 @@
 #include "ros_bridge/cloud_odom_ros_subscriber.h"
 #include <eigen_conversions/eigen_msg.h>
 
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include "utils/pose.h"
 
@@ -76,9 +76,8 @@ void PrintMsgStats(const sensor_msgs::PointCloud2ConstPtr& msg) {
 CloudOdomRosSubscriber::CloudOdomRosSubscriber(NodeHandle* node_handle,
                                                const ProjectionParams& params,
                                                const string& topic_clouds,
-                                               const string& topic_odom,
-                                               bool without_projection)
-    : AbstractSender{SenderType::STREAMER}, _params{params} , _without_projection{without_projection} {
+                                               const string& topic_odom)
+    : AbstractSender{SenderType::STREAMER}, _params{params} {
   _node_handle = node_handle;
   _topic_clouds = topic_clouds;
   _topic_odom = topic_odom;
@@ -112,7 +111,6 @@ void CloudOdomRosSubscriber::Callback(const PointCloud2::ConstPtr& msg_cloud,
   // PrintMsgStats(msg_cloud);
   Cloud::Ptr cloud_ptr = RosCloudToCloud(msg_cloud);
   cloud_ptr->SetPose(RosOdomToPose(msg_odom));
-  // if (!_without_projection)
   cloud_ptr->InitProjection(_params);
   ShareDataWithAllClients(*cloud_ptr);
 }
@@ -121,7 +119,6 @@ void CloudOdomRosSubscriber::CallbackVelodyne(
     const PointCloud2::ConstPtr& msg_cloud) {
   // PrintMsgStats(msg_cloud);
   Cloud::Ptr cloud_ptr = RosCloudToCloud(msg_cloud);
-  // if (!_without_projection)
   cloud_ptr->InitProjection(_params);
   ShareDataWithAllClients(*cloud_ptr);
 }
@@ -151,7 +148,8 @@ Cloud::Ptr CloudOdomRosSubscriber::RosCloudToCloud(
     point.y() = BytesTo<float>(msg->data, point_start_byte + y_offset);
     point.z() = BytesTo<float>(msg->data, point_start_byte + z_offset);
     // ring for Velodyne Laser Scanners
-    // point.ring() = BytesTo<uint16_t>(msg->data, point_start_byte + ring_offset);
+    // point.ring() = BytesTo<uint16_t>(msg->data, point_start_byte +
+    // ring_offset);
     // point.z *= -1;  // hack
     cloud.push_back(point);
   }

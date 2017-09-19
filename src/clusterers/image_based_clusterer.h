@@ -64,7 +64,8 @@ class ImageBasedClusterer : public AbstractClusterer {
       : AbstractClusterer(0.0, min_cluster_size, max_cluster_size),
         _counter(0),
         _angle_tollerance(angle_tollerance),
-        _label_client{nullptr} {}
+        _label_client{nullptr},
+        _cloud_client{nullptr} {}
 
   virtual ~ImageBasedClusterer() {}
 

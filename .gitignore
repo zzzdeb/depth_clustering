@@ -33,4 +33,6 @@
 
 /notebooks/
 
+/log/
+
 notebooks/.ipynb_checkpoints/*
