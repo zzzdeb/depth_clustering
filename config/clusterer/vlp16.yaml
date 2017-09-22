@@ -16,11 +16,11 @@ node: {
 ground_remover: {
   remover: "depth_ground_remover",
   smooth_window_size: 5,
-  angle: 7.0
+  angle: 5
 }
 
 clusterer: {
-  angle_tollerance: 10,
+  angle_tollerance: 20,
   min_cluster_size: 50,
   max_cluster_size: 25000
 }
@@ -31,7 +31,7 @@ cloud_publisher: {
 
 objects_publisher: {
   topic_name: "segmented_objects",
-  use_axial_bounding_box: true,
+  use_axial_bounding_box: false,
 }
 
 

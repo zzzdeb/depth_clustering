@@ -1,4 +1,4 @@
-// Copyright (C) 2017  I. Bogoslavskyi, C. Stachniss, University of Bonn
+// Copyright (C) 2017  E. Zolboo, RWTH Aachen
 
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -15,21 +15,17 @@
 
 #include "./tunnel_ground_remover.h"
 
-#include <opencv2/highgui/highgui.hpp>
-
-#include <algorithm>
-#include <memory>
-#include <cmath>
-
-#include "image_labelers/diff_helpers/angle_diff.h"
-#include "image_labelers/diff_helpers/simple_diff.h"
-#include "image_labelers/linear_image_labeler.h"
-#include "utils/timer.h"
-#include "utils/velodyne_utils.h"
-
 #include <ros/console.h>
 
-#include <iostream> //!!!
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
+
+#include "utils/timer.h"
+#include "utils/velodyne_utils.h"
 
 namespace depth_clustering {
 
@@ -37,148 +33,126 @@ using std::abs;
 
 using cv::Mat;
 using cv::DataType;
-using std::to_string;
 using time_utils::Timer;
-
 
 const cv::Point ANCHOR_CENTER = cv::Point(-1, -1);
 const int SAME_OUTPUT_TYPE = -1;
 
 void TunnelGroundRemover::OnNewObjectReceived(const Cloud& cloud,
                                               const int sender_id) {
-  // this can be done even faster if we switch to column-major implementation
-  // thus allowing us to load whole row in L1 cache
+
   if (!cloud.projection_ptr()) {
     ROS_INFO("No projection in cloud..");
   }
 
   Cloud cloud_copy(cloud);
 
+  const cv::Mat& depth_image =
+      _smoother.RepairDepth(cloud.projection_ptr()->depth_image(), 5, 1.0f);
+
   Timer total_timer;
-  PointCloudT::Ptr pcl_cloud_p = cloud.ToPcl();
-  PointCloudT gl_pcl_p;
-  if (_use_pca)
-    RemoveGroundPCA(pcl_cloud_p, gl_pcl_p);
-  else
-    RemoveGroundByHeight(pcl_cloud_p, gl_pcl_p);
 
-  uint64_t end = total_timer.measure();
-  ROS_INFO("Tunnel Ground removed in %lu us", end);
+  auto no_ground_image = Remove(cloud, depth_image);
 
-  Cloud::Ptr groundless_cloud_p = cloud.FromPcl(gl_pcl_p);
-  groundless_cloud_p->InitProjection(_params);
+  ROS_INFO("Tunnel Ground removed in %lu us", total_timer.measure());
 
-  // // debug
-  // cv::imwrite("/home/zzz/Pictures/Gray_Image.jpg",
-  //             groundless_cloud_p->projection_ptr()->depth_image());
-
-  cloud_copy.projection_ptr()->depth_image() =
-      groundless_cloud_p->projection_ptr()->depth_image();
-
-  // if (end > 2000000)  //!!! must be provided
-  // {
-  //   _use_obb = false;
-  //   ROS_INFO("ground_removal set to without OBB");
-  // } else if (end < 1500000)  //!!! must be provided
-  // {
-  //   _use_obb = true;
-  //   ROS_INFO("ground_removal set to use OBB");
-  // }
+  cloud_copy.projection_ptr()->depth_image() = no_ground_image;
 
   this->ShareDataWithAllClients(cloud_copy);
   _counter++;
 }
 
-void TunnelGroundRemover::RemoveGroundPCA(const PointCloudT::Ptr& cloud_p,
-                                          PointCloudT& gl_cloud) {
+Mat TunnelGroundRemover::Remove(const Cloud& cloud,
+                                const cv::Mat& image) const {
   Timer timer;
+  Mat res = image;
 
-  pcl::PCA<pcl::PointXYZL> pca;
-  // feature_extractor.setAngleStep(20);  //!!! must be tuned
-  pca.setInputCloud(cloud_p);
-  Eigen::Matrix3f eigen_vectors = pca.getEigenVectors();
+  Mat z_projected = image.mul(_z_projector);
+  // debug!!
+  cv::FileStorage file("/home/zzz/test/z_projector.ext",
+                       cv::FileStorage::WRITE);
+  file << "z_projector " << _z_projector;
+  file << "z_projected " << z_projected;
+  // for simple height ground removal, projecting on z axis is enough.
+  Mat projected = z_projected;
 
-  ROS_INFO("executing PCA took %lu us ", timer.measure());
+  // using pca
+  if (_use_pca) {
+    PointCloudT::Ptr pcl_cloud = cloud.ToPcl();
+    pcl::PCA<pcl::PointXYZL> pca;
+    // feature_extractor.setAngleStep(20);  //!!! must be tuned
+    pca.setInputCloud(pcl_cloud);
+    Eigen::Matrix3f eigen_vectors = pca.getEigenVectors();
 
-  float z_axis = std::max(std::max(abs(eigen_vectors(0, 2)),abs(eigen_vectors(1, 2))), abs(eigen_vectors(2, 2)));
+    ROS_INFO("executing PCA took %lu us ", timer.measure());
 
-  PointCloudT ground_cloud;  // debug
+    float v1z = abs(eigen_vectors(0, 2));
+    float v2z = abs(eigen_vectors(1, 2));
+    float v3z = abs(eigen_vectors(2, 2));
 
-  for (auto point : *cloud_p) {
-    if (point.z * z_axis > (_height - _sensor_h)) {
-      PointT p(point);
-      gl_cloud.push_back(p);
-    } else {
-      PointT p(point);
-      ground_cloud.push_back(p);
-    }
+    // eigenVector
+    float x, y, z;
+    int i;
+    if (v1z > v2z)
+      if (v1z > v3z)
+        i = 0;
+      else
+        i = 2;
+    else if (v2z > v3z)
+      i = 1;
+    else
+      i = 2;
+    x = eigen_vectors(i, 0);
+    y = eigen_vectors(i, 1);
+    z = eigen_vectors(i, 2);
+
+    Mat x_projected = image.mul(_x_projector, x);
+    Mat y_projected = image.mul(_y_projector, y);
+    projected = z_projected * z + x_projected + y_projected;
   }
-  // debug
-  sensor_msgs::PointCloud2 cloud2;
-  pcl::toROSMsg(ground_cloud, cloud2);
-  cloud2.header.frame_id = _frame_id;
-  cloud2.header.stamp = ros::Time::now();
-  _cloud_pub.publish(cloud2);
+
+  for (int i = 0; i < projected.rows; i++)
+    //!!!
+    for (int j = 0; j < projected.cols; j++)
+      if (projected.at<float>(i, j) < _height - _sensor_h)
+        res.at<float>(i, j) = 0;
+  return res;
 }
 
-void TunnelGroundRemover::RemoveGroundByHeight(const PointCloudT::Ptr& cloud_p,
-                                           PointCloudT& gl_cloud) {
-  for (auto point : *cloud_p) {
-    if (point.z < -(_height - _sensor_h)) {
-      PointT p(point);
-      gl_cloud.push_back(p);
-    }
+void TunnelGroundRemover::InitProjectors() {
+  // Declare what you need
+  cv::FileStorage file("/home/zzz/test/some_name.ext", cv::FileStorage::WRITE);
+
+  _z_projector = Mat(_params.rows(), _params.cols(), DataType<float>::type);
+
+  file << "_z_projector " << _z_projector;
+  for (unsigned int i = 0; i < _params.rows(); i++) {
+    //!!!
+    for (unsigned int j = 0; j < _params.cols(); j++)
+      _z_projector.at<float>(i, j) = _params.RowAngleSines().at(i);
   }
-}
 
-void TunnelGroundRemover::PublishInfo(const PointCloudT& gl_cloud,
-                                      const PointT& min_point_OBB,
-                                      const PointT& max_point_OBB,
-                                      const Eigen::Matrix3f& rot_M,
-                                      const PointT& position_OBB) {
-  sensor_msgs::PointCloud2 cloud2;
-  pcl::toROSMsg(gl_cloud, cloud2);
-  cloud2.header.frame_id = _frame_id;
-  cloud2.header.stamp = ros::Time::now();
-  _cloud_pub.publish(cloud2);
+  // Write to file!
+  file << "_z_projector after " << _z_projector;
+  _x_projector = Mat(_params.rows(), _params.cols(), DataType<float>::type);
+  //!!! finde heraus welche welche ist
 
-  geometry_msgs::Vector3 scale;
-  scale.x = min_point_OBB.x;
-  scale.y = min_point_OBB.y;
-  scale.z = min_point_OBB.z;
-  geometry_msgs::Pose pose;
-  pose.position.x = position_OBB.x;
-  pose.position.y = position_OBB.y;
-  pose.position.z = position_OBB.z;
-  Eigen::Quaternionf q(rot_M);
-  pose.orientation.x = q.x();
-  pose.orientation.y = q.y();
-  pose.orientation.z = q.z();
-  pose.orientation.w = q.w();
-  visualization_msgs::MarkerArray obj_markers;  //!!! Type
-  visualization_msgs::Marker marker;
-  int id = 0;
-  ros::Time stamp = ros::Time::now();  //!!! is it really now?
-                                       // for (const auto &object: objects)
-                                       // {
+  file << "_x_projector" << _x_projector;
+  for (unsigned int i = 0; i < _params.rows(); i++) {
+    for (unsigned int j = 0; j < _params.cols(); j++)
+      _x_projector.at<float>(i, j) =
+          _params.RowAngleCosines().at(i) * _params.ColAngleCosines().at(j);
+  }
+  file << "_x_projector after " << _x_projector;
 
-  marker.header.frame_id = _frame_id;
-  marker.header.stamp = stamp;
-  marker.ns = "";
-  marker.id = id++;
-  marker.type = visualization_msgs::Marker::CUBE;
-  marker.action = visualization_msgs::Marker::ADD;
-  marker.pose = pose;
-  marker.scale = scale;
-  marker.color.a = 1;  // Don't forget to set the alpha!
-  marker.color.r = 0;
-  marker.color.g = 0;
-  marker.color.b = 0;
-  // only if using a MESH_RESOURCE marker type:
-  // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-  obj_markers.markers.push_back(marker);
-  // }
-  _marker_pub.publish(obj_markers);
+  _y_projector = Mat(_params.rows(), _params.cols(), DataType<float>::type);
+  file << "_y_projector " << _y_projector;
+  for (unsigned int i = 0; i < _params.rows(); i++) {
+    for (unsigned int j = 0; j < _params.cols(); j++)
+      _y_projector.at<float>(i, j) =
+          _params.RowAngleCosines().at(i) * _params.ColAngleSines().at(j);
+  }
+  file << "_y_projector after " << _y_projector;
 }
 
 }  // namespace depth_clustering

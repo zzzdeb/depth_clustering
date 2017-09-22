@@ -23,6 +23,7 @@
 #include "image_labelers/linear_image_labeler.h"
 #include "image_labelers/diff_helpers/angle_diff.h"
 #include "image_labelers/diff_helpers/simple_diff.h"
+#include "image_labelers/diff_helpers/ground_diff.h"
 #include "utils/timer.h"
 
 #include <ros/console.h>
@@ -82,7 +83,8 @@ Mat DepthGroundRemover::ZeroOutGroundBFS(const cv::Mat& image,
                                          int kernel_size) const {
   Mat res = cv::Mat::zeros(image.size(), CV_32F);
   LinearImageLabeler<> image_labeler(image, _params, threshold);
-  SimpleDiff simple_diff_helper(&angle_image);
+  // SimpleDiff simple_diff_helper(&angle_image); !!!
+  GroundDiff ground_diff_helper(&angle_image);
   Radians start_thresh = 30_deg;
   for (int c = 0; c < image.cols; ++c) {
     // start at bottom pixels and do bfs
@@ -100,7 +102,8 @@ Mat DepthGroundRemover::ZeroOutGroundBFS(const cv::Mat& image,
     if (angle_image.at<float>(r, c) > start_thresh.val()) {
       continue;
     }
-    image_labeler.LabelOneComponent(1, current_coord, &simple_diff_helper);
+    // image_labeler.LabelOneComponent(1, current_coord, &simple_diff_helper); !!!
+    image_labeler.LabelOneComponent(1, current_coord, &ground_diff_helper);
   }
   auto label_image_ptr = image_labeler.GetLabelImage();
   if (label_image_ptr->rows != res.rows || label_image_ptr->cols != res.cols) {

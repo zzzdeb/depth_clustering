@@ -27,7 +27,7 @@ node: {
 # }
 ground_remover: {
   remover: "depth_ground_remover",
-  angle: 7.0,
+  angle: 5.0,
   smooth_window_size: 5
 }
 # ground_remover: {

@@ -1,4 +1,4 @@
-// Copyright (C) 2017  I. Bogoslavskyi, C. Stachniss, University of Bonn
+// Copyright (C) 2017  E. Zolboo, RWTH Aachen
 
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -18,21 +18,19 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <algorithm>
 #include <string>
 
 #include "communication/abstract_client.h"
 #include "communication/abstract_sender.h"
 #include "projections/projection_params.h"
 #include "utils/cloud.h"
-#include "utils/oriented_bounding_box.h"
+
 #include "utils/radians.h"
 
-#include <pcl/point_cloud.h>
 #include <pcl/common/pca.h>
-
+#include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <ros/ros.h>
+
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -40,6 +38,7 @@
 #include "./depth_ground_remover.h"
 
 #include "ground_removal/abstract_ground_remover.h"
+#include "utils/savitsky_golay_smoothing.h"
 
 namespace depth_clustering {
 
@@ -47,10 +46,9 @@ typedef pcl::PointXYZL PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
 /**
- * @brief      A class to remove ground based upon depth image
- * @details    Given a depth image and image config this class should remove the
- *             ground and send the new depth image with no ground further
- *             through the pipeline to its clients.
+ * @brief      A class to remove ground based upon pca axis
+ * @details     A class to remove ground based upon pca axis
+ *
  *
  * @param      params  projection params
  */
@@ -59,25 +57,18 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   using SenderT = AbstractSender<Cloud>;
 
  public:
-  explicit TunnelGroundRemover(ros::NodeHandle& nh,
-                               const ProjectionParams& params, double height,
+  explicit TunnelGroundRemover(const ProjectionParams& params, double height,
                                double sensor_h, int window_size = 5,
                                bool use_pca = true)
       : AbstractGroundRemover(),
-        _nh{nh},
-        _marker_pub{
-            _nh.advertise<visualization_msgs::MarkerArray>("tunnel", 1)},
-        _cloud_pub{
-            _nh.advertise<sensor_msgs::PointCloud2>("ground_remover", 1)},
         _params{params},
+        _smoother{params, window_size},
         _height{height},
         _sensor_h{sensor_h},
-        _smoother{params, window_size},
-        _window_size{window_size},
-        _use_pca{use_pca} 
-    {
-        _nh.getParam("node/laser_frame_id", _frame_id);
-    }
+        _use_pca{use_pca},
+        _window_size{window_size} {
+    InitProjectors();
+  }
   virtual ~TunnelGroundRemover() {}
 
   /**
@@ -89,19 +80,30 @@ class TunnelGroundRemover : public AbstractGroundRemover {
    * @param      sender_id    id of the sender
    */
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override;
+  /**
+ * @brief      removes ground by height on vertical axis, calculated through
+ *              PCA.
+ * @details    removes ground by height on vertical axis, calculated through
+ *              PCA.
+ *
+ * @param[in]      cloud        Cloud
+ * @param[in]      image        DepthImage of the cloud (smoothed)
+ *
+ * @return         depth image where ground depth set to zero.
+ */
+  cv::Mat Remove(const Cloud& cloud, const cv::Mat& image) const;
 
-  void RemoveGroundPCA(const PointCloudT::Ptr& cloud_p, PointCloudT& gl_cloud);
-  void RemoveGroundByHeight(const PointCloudT::Ptr& cloud_p,
-                            PointCloudT& gl_cloud);
-
-  void PublishInfo(const PointCloudT& gl_cloud, const PointT& min_point_OBB,
-                   const PointT& max_point_OBB, const Eigen::Matrix3f& rot_M,
-                   const PointT& position_OBB = PointT());
+ private:
+  /**
+    * @brief      Initialize 3 projector Images of each axis based on
+    *                parameters
+    * @details    Initialize 3 projector Images of each axis based on
+    *                parameters
+    *
+    */
+  void InitProjectors();
 
  protected:
-  ros::NodeHandle _nh;
-  ros::Publisher _marker_pub, _cloud_pub;
-  std::string _frame_id;
 
   ProjectionParams _params;
   float _eps = 0.001f;
@@ -113,6 +115,10 @@ class TunnelGroundRemover : public AbstractGroundRemover {
   bool _use_pca;
   int _window_size = 5;
   mutable int _counter = 0;
+
+  cv::Mat _x_projector;
+  cv::Mat _y_projector;
+  cv::Mat _z_projector;
 };
 
 }  // namespace depth_clustering

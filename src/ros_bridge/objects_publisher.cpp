@@ -1,3 +1,18 @@
+// Copyright (C) 2017  E. Zolboo, RWTH Aachen
+
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #include "objects_publisher.h"
 #include "../utils/init_from_ros_param.h"
 
@@ -30,40 +45,6 @@ void ObjectsPublisher::OnNewObjectReceived(
     objects.push_back(transformation);
   }
   PublishObjects(objects);
-}
-
-void ObjectsPublisher::MinBB(
-    const pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_ptr,
-    pair<geometry_msgs::Pose, geometry_msgs::Vector3>& transformation) {
-  // pcl::PointXYZL min_point_OBB;
-  // pcl::PointXYZL max_point_OBB;
-  // pcl::PointXYZL position_OBB;
-  // Eigen::Matrix3f rotational_matrix_OBB;
-
-  // pcl::MomentOfInertiaEstimation<pcl::PointXYZL> feature_extractor;
-  // feature_extractor.setInputCloud(cloud_ptr);
-  // feature_extractor.setAngleStep(30);
-  // feature_extractor.compute();  //!!! is it necessarily to compute all feateres?
-  //                               //! computeOBB is private create yourown for
-  // //! computeOBB.
-  // feature_extractor.getOBB(min_point_OBB, max_point_OBB, position_OBB,
-  //                          rotational_matrix_OBB);
-  // float factor = 1.5;
-  // geometry_msgs::Vector3 scale;
-  // scale.x = min_point_OBB.x * factor;
-  // scale.y = min_point_OBB.y * factor;
-  // scale.z = min_point_OBB.z * factor;
-  // geometry_msgs::Pose pose;
-  // pose.position.x = position_OBB.x;
-  // pose.position.y = position_OBB.y;
-  // pose.position.z = position_OBB.z;
-
-  // Eigen::Quaternionf q(rotational_matrix_OBB);
-  // pose.orientation.x = q.x();
-  // pose.orientation.y = q.y();
-  // pose.orientation.z = q.z();
-  // pose.orientation.w = q.w();
-  // transformation = make_pair(pose, scale);  //!!!
 }
 
 void ObjectsPublisher::MinRecArea(
