@@ -17,6 +17,7 @@
 #define _ROS_VISUALIZER_
 
 #include <ros/ros.h>
+#include <ros/callback_queue.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
@@ -62,17 +63,17 @@ public:
 
 protected:
   ros::NodeHandle _nh;
-  ros::Publisher _image_pub;
+  ros::Publisher _depth_image_pub;
+  ros::Publisher _label_image_pub;
   ros::Publisher _cloud_pub;
   
 private:
+ void PubImages(const cv::Mat &depth_image, const cv::Mat &label_image);
+ void PubCloud(const PointCloudT &cloud);
 
-  void PubImage(const cv::Mat& label_image);
-  void PubCloud(const PointCloudT &cloud);
-  
-  std::string _frame_id;
-  int _min_cluster_size;
-  int _max_cluster_size;
+ std::string _frame_id;
+ int _min_cluster_size;
+ int _max_cluster_size;
 };
 
 } // namespace depth_clustering

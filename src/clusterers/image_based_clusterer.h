@@ -124,44 +124,47 @@ class ImageBasedClusterer : public AbstractClusterer {
     ROS_INFO("labels image sent to clients in: %lu us",
             timer.measure());
 
-    // create 3d clusters from image labels
-    std::unordered_map<uint16_t, Cloud> clusters;
-    
-    for (int row = 0; row < labels_ptr->rows; ++row) {
-      for (int col = 0; col < labels_ptr->cols; ++col) {
-        const auto& point_container = cloud.projection_ptr()->at(row, col);
-        if (point_container.IsEmpty()) {
-          // this is ok, just continue, nothing interesting here, no points.
-          continue;
-        }
-        uint16_t label = labels_ptr->at<uint16_t>(row, col);
-        if (label < 1) {
-          // this is a default label, skip
-          continue;
-        }
-        for (const auto& point_idx : point_container.points()) {
-          const auto& point = cloud.points()[point_idx];
-          clusters[label].push_back(point);
+    if(this->client_count()){
+      // create 3d clusters from image labels
+      std::unordered_map<uint16_t, Cloud> clusters;
+      
+      for (int row = 0; row < labels_ptr->rows; ++row) {
+        for (int col = 0; col < labels_ptr->cols; ++col) {
+          const auto& point_container = cloud.projection_ptr()->at(row, col);
+          if (point_container.IsEmpty()) {
+            // this is ok, just continue, nothing interesting here, no points.
+            continue;
+          }
+          uint16_t label = labels_ptr->at<uint16_t>(row, col);
+          if (label < 1) {
+            // this is a default label, skip
+            continue;
+          }
+          for (const auto& point_idx : point_container.points()) {
+            const auto& point = cloud.points()[point_idx];
+            clusters[label].push_back(point);
+          }
         }
       }
-    }
-
-    // filter out unfitting clusters
-    std::vector<uint16_t> labels_to_erase;
-    for (const auto& kv : clusters) {
-      const auto& cluster = kv.second;
-      if (cluster.size() < this->_min_cluster_size ||
-          cluster.size() > this->_max_cluster_size) {
-        labels_to_erase.push_back(kv.first);
+      
+      // filter out unfitting clusters
+      std::vector<uint16_t> labels_to_erase;
+      for (const auto& kv : clusters) {
+        const auto& cluster = kv.second;
+        if (cluster.size() < this->_min_cluster_size ||
+        cluster.size() > this->_max_cluster_size) {
+          labels_to_erase.push_back(kv.first);
+        }
       }
-    }
-    for (auto label : labels_to_erase) {
-      clusters.erase(label);
+      for (auto label : labels_to_erase) {
+        clusters.erase(label);
+      }
+      
+      ROS_INFO("prepared clusters in: %lu us", timer.measure());
+      this->ShareDataWithAllClients(clusters);
+      ROS_INFO("clusters shared: %lu us", timer.measure());
     }
 
-    ROS_INFO("prepared clusters in: %lu us", timer.measure());
-    this->ShareDataWithAllClients(clusters);
-    ROS_INFO("clusters shared: %lu us", timer.measure());
     if(_cloud_client)
     {
       auto foo = std::make_pair(make_shared<Cloud>(cloud),*labels_ptr);

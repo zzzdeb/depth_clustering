@@ -83,7 +83,7 @@ void ReadData(const string& in_path, ClustererT* clusterer,
       InitFromRosParam<double>(*nh, "ground_remover/sensor_height",
                                sensor_height);
       ground_remover = new TunnelGroundRemover(*proj_params_ptr, height,
-                                               sensor_height, 5, false);
+                                               sensor_height, 5, true);
     }
     ground_remover->AddClient(clusterer);
   }
@@ -98,12 +98,11 @@ void ReadData(const string& in_path, ClustererT* clusterer,
     auto depth_image = MatFromDepthPng(path);
     auto cloud_ptr = Cloud::FromImage(depth_image, *proj_params_ptr);
     time_utils::Timer timer;
-    // visualizer->OnNewObjectReceived(*cloud_ptr, 0);
     ground_remover->OnNewObjectReceived(*cloud_ptr, 0);
     // tunnel_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
     auto current_millis = timer.measure(time_utils::Timer::Units::Milli);
     ROS_INFO("It took %lu ms to process and show everything.", current_millis);
-    uint max_wait_time = 100;
+    uint max_wait_time = 150;
     if (current_millis > max_wait_time) {
       continue;
     }
@@ -199,9 +198,7 @@ int main(int argc, char* argv[]) {
            angle_tollerance.ToDegrees());
 
   subscriber.StartListeningToRos();
-  int num_thread;
-  InitFromRosParam<int>(nh_p, "node/num_thread", num_thread);
-  ros::AsyncSpinner spinner(num_thread);
+  ros::AsyncSpinner spinner(1);
   spinner.start();
 
   ros::waitForShutdown();
