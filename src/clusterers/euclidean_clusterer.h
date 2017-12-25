@@ -62,11 +62,11 @@ class EuclideanClusterer : public AbstractClusterer {
   void OnNewObjectReceived(const Cloud& cloud, const int sender_id) override {
     auto pcl_cloud_ptr = cloud.ToPcl();
     std::unordered_map<uint16_t, Cloud> clusters;
-    if (this->_counter++ % this->_skip != 0) {
-      // share empty clusters
-      this->ShareDataWithAllClients(clusters);
-      return;
-    }
+    // if (this->_counter++ % this->_skip != 0) {
+    //   // share empty clusters
+    //   this->ShareDataWithAllClients(clusters);
+    //   return;
+    // }
     auto start = high_resolution_clock::now();
     typename pcl::search::KdTree<PointT>::Ptr tree(
         new pcl::search::KdTree<PointT>);

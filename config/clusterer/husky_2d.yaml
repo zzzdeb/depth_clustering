@@ -4,7 +4,6 @@ lidar_config_link: "/config/projection/husky.cfg"
 
 node: {
   topic_clouds: "/front/scan/cloud",
-  num_thread: 1
 }
 
 clusterer: {

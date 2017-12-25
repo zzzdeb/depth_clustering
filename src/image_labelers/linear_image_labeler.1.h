@@ -20,7 +20,6 @@
 
 #include <algorithm>
 #include <queue>
-#include <functional>
 
 #include "image_labelers/abstract_image_labeler.h"
 #include "image_labelers/pixel_coords.h"
@@ -36,11 +35,6 @@ namespace depth_clustering {
 template <int16_t STEP_ROW = 1, int16_t STEP_COL = 1>
 class LinearImageLabeler : public AbstractImageLabeler {
  public:
-  static constexpr int16_t V_NEIGH_SIZE = 2 * STEP_ROW;
-  static constexpr int16_t H_NEIGH_SIZE = 2 * STEP_COL;
-  std::array<PixelCoord, V_NEIGH_SIZE> V_Neighborhood;
-  std::array<PixelCoord, H_NEIGH_SIZE> H_Neighborhood;
-
   static constexpr int16_t NEIGH_SIZE = 2 * STEP_ROW + 2 * STEP_COL;
   std::array<PixelCoord, NEIGH_SIZE> Neighborhood;
 
@@ -53,25 +47,15 @@ class LinearImageLabeler : public AbstractImageLabeler {
    */
   explicit LinearImageLabeler(const cv::Mat& depth_image,
                               const ProjectionParams& params,
-                              const Radians& h_angle_threshold,
-                              float v_factor=1)
-      : AbstractImageLabeler(depth_image, params, h_angle_threshold), _v_radians_threshold(h_angle_threshold.val()*v_factor) {
-    _h_radians_threshold = h_angle_threshold.val();
+                              const Radians& angle_threshold)
+      : AbstractImageLabeler(depth_image, params, angle_threshold) {
     // this can probably be done at compile time
     int16_t counter = 0;
     for (int16_t r = STEP_ROW; r > 0; --r) {
-      
-      Neighborhood[counter] = PixelCoord(-r, 0);
-      V_Neighborhood[counter++] = PixelCoord(-r, 0);
-      
-      Neighborhood[counter] = PixelCoord(r, 0);
-      V_Neighborhood[counter++] = PixelCoord(r, 0);
-
+      Neighborhood[counter++] = PixelCoord(-r, 0);
+      Neighborhood[counter++] = PixelCoord(r, 0);
     }
-    counter = 0;
     for (int16_t c = STEP_COL; c > 0; --c) {
-      H_Neighborhood[counter++] = PixelCoord(0, -c);
-      H_Neighborhood[counter++] = PixelCoord(0, c);
       Neighborhood[counter++] = PixelCoord(0, -c);
       Neighborhood[counter++] = PixelCoord(0, c);
     }
@@ -113,24 +97,12 @@ class LinearImageLabeler : public AbstractImageLabeler {
         // depth of this point is wrong, so don't bother adding it to queue
         continue;
       }
-      for (const auto& step : V_Neighborhood) {
+      for (const auto& step : Neighborhood) {
         PixelCoord neighbor = current + step;
         if (neighbor.row < 0 || neighbor.row >= _label_image.rows) {
           // point doesn't fit
           continue;
         }
-        uint16_t neigh_label = LabelAt(neighbor);
-        if (neigh_label > 0) {
-          // we have already labeled this one
-          continue;
-        }
-        auto diff = diff_helper->DiffAt(current, neighbor);
-        if (diff_helper->SatisfiesThreshold(diff, _v_radians_threshold)) {
-          labeling_queue.push(neighbor);
-        }
-      }
-      for (const auto& step : H_Neighborhood) {
-        PixelCoord neighbor = current + step;
         // if we just went over the borders in horiz direction - wrap around
         neighbor.col = WrapCols(neighbor.col);
         uint16_t neigh_label = LabelAt(neighbor);
@@ -139,7 +111,7 @@ class LinearImageLabeler : public AbstractImageLabeler {
           continue;
         }
         auto diff = diff_helper->DiffAt(current, neighbor);
-        if (diff_helper->SatisfiesThreshold(diff, _h_radians_threshold)) {
+        if (diff_helper->SatisfiesThreshold(diff, _radians_threshold)) {
           labeling_queue.push(neighbor);
         }
       }
@@ -219,10 +191,6 @@ class LinearImageLabeler : public AbstractImageLabeler {
       }
     }
   }
-
-private:
-  float _v_radians_threshold;
-  float _h_radians_threshold;
 };
 
 }  // namespace depth_clustering

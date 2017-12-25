@@ -27,6 +27,8 @@
 #include "utils/timer.h"
 #include "utils/velodyne_utils.h"
 
+ #include <tf/LinearMath/Quaternion.h>
+
 namespace depth_clustering {
 
 using std::abs;
@@ -68,44 +70,41 @@ Mat TunnelGroundRemover::Remove(const Cloud& cloud,
   Mat res = image;
 
   Mat z_projected = image.mul(_z_projector);
-  // debug!!
-  cv::FileStorage file("/home/zzz/test/z_projector.ext",
-                       cv::FileStorage::WRITE);
-  file << "z_projector " << _z_projector;
-  file << "z_projected " << z_projected;
   // for simple height ground removal, projecting on z axis is enough.
   Mat projected = z_projected;
 
   // using pca
   if (_use_pca) {
     PointCloudT::Ptr pcl_cloud = cloud.ToPcl();
+    // ROS_ERROR("cloud has %i points", pcl_cloud->size());
+    // //downsampling
+    PointCloudT::Ptr cloud_filtered(new PointCloudT());
+  
+    // Create the filtering object
+    pcl::VoxelGrid<pcl::PointXYZL> sor;
+    sor.setInputCloud (pcl_cloud);
+    sor.setLeafSize (0.3f, 0.3f, 0.3f);
+    sor.filter (*cloud_filtered);
+
+    // ROS_ERROR("filtered has %i points", cloud_filtered->size());
+    // ROS_INFO("Filtering took %lu us ", timer.measure());
+
     pcl::PCA<pcl::PointXYZL> pca;
-    // feature_extractor.setAngleStep(20);  //!!! must be tuned
-    pca.setInputCloud(pcl_cloud);
+    pca.setInputCloud(cloud_filtered);//!!!
     Eigen::Matrix3f eigen_vectors = pca.getEigenVectors();
 
     ROS_INFO("executing PCA took %lu us ", timer.measure());
 
-    float v1z = abs(eigen_vectors(0, 2));
-    float v2z = abs(eigen_vectors(1, 2));
-    float v3z = abs(eigen_vectors(2, 2));
+    auto pca1 = eigen_vectors.col(0);
+    Eigen::Vector3f rot_v = pca1.cross(Eigen::Vector3f(0, 0, 1));
 
-    // eigenVector
-    float x, y, z;
-    int i;
-    if (v1z > v2z)
-      if (v1z > v3z)
-        i = 0;
-      else
-        i = 2;
-    else if (v2z > v3z)
-      i = 1;
-    else
-      i = 2;
-    x = eigen_vectors(i, 0);
-    y = eigen_vectors(i, 1);
-    z = eigen_vectors(i, 2);
 
+    Eigen::Matrix3f rot_m = Eigen::AngleAxisf(0.5 * M_PI, rot_v).toRotationMatrix();
+    Eigen::Vector3f v_axis = rot_m*pca1;
+
+    double x = v_axis(0);
+    double y = v_axis(1);
+    double z = v_axis(2);
     Mat x_projected = image.mul(_x_projector, x);
     Mat y_projected = image.mul(_y_projector, y);
     projected = z_projected * z + x_projected + y_projected;
@@ -120,39 +119,39 @@ Mat TunnelGroundRemover::Remove(const Cloud& cloud,
 }
 
 void TunnelGroundRemover::InitProjectors() {
-  // Declare what you need
-  cv::FileStorage file("/home/zzz/test/some_name.ext", cv::FileStorage::WRITE);
+    // Write to file!
+  // cv::FileStorage file("/home/zzz/test/some_name.ext", cv::FileStorage::WRITE);
 
   _z_projector = Mat(_params.rows(), _params.cols(), DataType<float>::type);
 
-  file << "_z_projector " << _z_projector;
+  // file << "_z_projector " << _z_projector;
   for (unsigned int i = 0; i < _params.rows(); i++) {
     //!!!
     for (unsigned int j = 0; j < _params.cols(); j++)
       _z_projector.at<float>(i, j) = _params.RowAngleSines().at(i);
   }
 
-  // Write to file!
-  file << "_z_projector after " << _z_projector;
+
+  // file << "_z_projector after " << _z_projector;
   _x_projector = Mat(_params.rows(), _params.cols(), DataType<float>::type);
   //!!! finde heraus welche welche ist
 
-  file << "_x_projector" << _x_projector;
+  // file << "_x_projector" << _x_projector;
   for (unsigned int i = 0; i < _params.rows(); i++) {
     for (unsigned int j = 0; j < _params.cols(); j++)
       _x_projector.at<float>(i, j) =
           _params.RowAngleCosines().at(i) * _params.ColAngleCosines().at(j);
   }
-  file << "_x_projector after " << _x_projector;
+  // file << "_x_projector after " << _x_projector;
 
   _y_projector = Mat(_params.rows(), _params.cols(), DataType<float>::type);
-  file << "_y_projector " << _y_projector;
+  // file << "_y_projector " << _y_projector;
   for (unsigned int i = 0; i < _params.rows(); i++) {
     for (unsigned int j = 0; j < _params.cols(); j++)
       _y_projector.at<float>(i, j) =
           _params.RowAngleCosines().at(i) * _params.ColAngleSines().at(j);
   }
-  file << "_y_projector after " << _y_projector;
+  // file << "_y_projector after " << _y_projector;
 }
 
 }  // namespace depth_clustering

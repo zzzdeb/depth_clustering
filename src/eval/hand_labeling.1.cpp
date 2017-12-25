@@ -1,17 +1,3 @@
-// Copyright (C) 2017  E. Zolboo, RWTH Aachen
-
-// This program is free software: you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the Free
-// Software Foundation, either version 3 of the License, or (at your option)
-// any later version.
-
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-// more details.
-
-// You should have received a copy of the GNU General Public License along
-// with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <string>
 #include <thread>
@@ -34,7 +20,6 @@
 #include "utils/velodyne_utils.h"
 
 #include "ros_bridge/cloud_odom_ros_subscriber.h"
-#include "ros_bridge/image_ros_subscriber.h"
 #include "ros_bridge/objects_publisher.h"
 #include "ros_bridge/ros_visualizer.h"
 
@@ -44,16 +29,15 @@ using std::string;
 using std::vector;
 
 using namespace depth_clustering;
-
 using ClustererT = ImageBasedClusterer<LinearImageLabeler<>>;
 
-void ReadData(const string& in_path, ClustererT* clusterer,
+void TestImages(const string& in_path, ClustererT* clusterer,
               RosVisualizer* visualizer, ObjectsPublisher* objects_publisher,
               ros::NodeHandle* nh) {
   // delay reading for one second to allow GUI to load
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   // now load the data
-  ROS_INFO("running on Moosman data");
+  ROS_INFO("running on TestData");
 
   // ProjectionParam
   auto image_reader =
@@ -91,119 +75,67 @@ void ReadData(const string& in_path, ClustererT* clusterer,
 
   for (const auto& path : image_reader.GetAllFilePaths()) {
     if (ros::isShuttingDown()) {
-      if (!ros::ok()) {
-        delete ground_remover;
-        break;
+      while (ros::ok()) {
+        continue;      
       }
+      delete ground_remover;
+      return;
     }
     auto depth_image = MatFromDepthPng(path);
     auto cloud_ptr = Cloud::FromImage(depth_image, *proj_params_ptr);
     time_utils::Timer timer;
+    // visualizer->OnNewObjectReceived(*cloud_ptr, 0);
     ground_remover->OnNewObjectReceived(*cloud_ptr, 0);
     // tunnel_ground_remover.OnNewObjectReceived(*cloud_ptr, 0);
     auto current_millis = timer.measure(time_utils::Timer::Units::Milli);
     ROS_INFO("It took %lu ms to process and show everything.", current_millis);
-    // uint max_wait_time = 150;
-    // if (current_millis > max_wait_time) {
-    //   continue;
-    // }
-    // auto time_to_wait = max_wait_time - current_millis;
-    // ROS_INFO("Waiting another %lu ms.", time_to_wait);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(time_to_wait));
+    uint max_wait_time = 100;
+    if (current_millis > max_wait_time) {
+      continue;
+    }
+    auto time_to_wait = max_wait_time - current_millis;
+    ROS_INFO("Waiting another %lu ms.", time_to_wait);
+    std::this_thread::sleep_for(std::chrono::milliseconds(time_to_wait));
   }
 }
 
-int main(int argc, char* argv[]) {
-  ros::init(argc, argv, "depth_clusterer");
+int main(int argc, char* argv[]){
 
+  ros::init(argc, argv, "depth_clusterer");
+    
   ros::NodeHandle nh_p("~");
   ros::NodeHandle nh;
-
+  
   // Angle tollerance for segmentation. Default value: 10 Degree
   double angle_arg;
   InitFromRosParam<double>(nh_p, "clusterer/angle_tollerance", angle_arg, 10.0);
   Radians angle_tollerance = Radians::FromDegrees(angle_arg);
 
   RosVisualizer visualizer(nh_p);
-
+  
   ObjectsPublisher objects_publisher(nh_p);
 
   // Clusterer
   int min_cluster_size;
   InitFromRosParam<int>(nh_p, "clusterer/min_cluster_size", min_cluster_size);
-
+  
   int max_cluster_size;
   InitFromRosParam<int>(nh_p, "clusterer/max_cluster_size", max_cluster_size);
-
-  ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size, 1.5);
-  // EuclideanClusterer clusterer;
+  
+  ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
   clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
   clusterer.SetCloudClient(&visualizer);
   clusterer.AddClient(&objects_publisher);
-
+  
   // If it is running from Moosmanns data?
   string from_path;
   if (InitFromRosParam<string>(nh_p, "from_path", from_path, "")) {
-    // create and run loader thread
-    std::thread loader_thread(ReadData, from_path, &clusterer,
-                              &visualizer, &objects_publisher, &nh_p);
-
-    // join thread after the application is dead
-    loader_thread.join();
-    return 0;
-  }
-
-  // Topic to subscribe
-  string topic_clouds;
-  InitFromRosParam<string>(nh_p, "node/topic_clouds", topic_clouds);
-
-  // ProjectionParam from file
-  string lidar_config_link;
-  InitFromRosParam<string>(nh_p, "lidar_config_link", lidar_config_link);
-  lidar_config_link = SOURCE_PATH + lidar_config_link;
-  ROS_INFO_STREAM("Absolute lidar_config link: " << lidar_config_link);
-  auto proj_params_ptr = ProjectionParams::FromConfigFile(lidar_config_link);
-
-  CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
-  // ImageRosSubscriber subscriber(nh, *proj_params_ptr, "/depth_image");//!!!
-
-  // Ground_remover
-  AbstractGroundRemover* ground_remover;
-  string remover = "No Groundremover";
-  if (!InitFromRosParam<string>(nh_p, "ground_remover/remover", remover))
-  subscriber.AddClient(&clusterer);
-  else {
-    if (remover == "depth_ground_remover") {
-      int smooth_window_size;
-      InitFromRosParam<int>(nh_p, "ground_remover/smooth_window_size",
-                            smooth_window_size);
-      float angle;
-      InitFromRosParam<float>(nh_p, "ground_remover/angle", angle);
-      Radians ground_remove_angle = Radians::FromDegrees(angle);
-
-      ground_remover = new DepthGroundRemover(
-          *proj_params_ptr, ground_remove_angle, smooth_window_size);
+      // create and run loader thread
+      std::thread loader_thread(ReadData, from_path, &clusterer,
+        &visualizer, &objects_publisher, &nh_p);
+        
+        // join thread after the application is dead
+        loader_thread.join();
+        return 0;
     }
-    if (remover == "tunnel_ground_remover") {
-      double height;
-      InitFromRosParam<double>(nh_p, "ground_remover/height", height);
-      double sensor_height;
-      InitFromRosParam<double>(nh_p, "ground_remover/sensor_height",
-                               sensor_height);
-      ground_remover = new TunnelGroundRemover(*proj_params_ptr, height,
-                                               sensor_height);
-    }
-    subscriber.AddClient(ground_remover);
-    ground_remover->AddClient(&clusterer);
-  }
-
-  ROS_INFO("Running with angle tollerance: %f degrees",
-           angle_tollerance.ToDegrees());
-
-  subscriber.StartListeningToRos();
-  ros::AsyncSpinner spinner(1);
-  spinner.start();
-
-  ros::waitForShutdown();
-  return 0;
 }

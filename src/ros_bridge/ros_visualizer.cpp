@@ -15,6 +15,8 @@
 
 #include "./ros_visualizer.h"
 
+#include <stdlib.h>
+
 namespace depth_clustering
 {
 
@@ -39,13 +41,12 @@ RosVisualizer::RosVisualizer():
 AbstractClient<std::pair<Cloud::Ptr, cv::Mat> >(){}
 
 RosVisualizer::RosVisualizer(ros::NodeHandle& nh)
-: AbstractClient<std::pair<Cloud::Ptr, cv::Mat> >(), _nh{nh}
+: AbstractClient<std::pair<Cloud::Ptr, cv::Mat> >()
 {
-    _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
-    _image_pub = _nh.advertise<sensor_msgs::Image>("depth_image", 1);
-    nh.getParam("node/laser_frame_id", _frame_id);
-    nh.getParam("clusterer/min_cluster_size", _min_cluster_size);
-    nh.getParam("clusterer/max_cluster_size", _max_cluster_size);
+  initNode(nh);
+  nh.getParam("node/laser_frame_id", _frame_id);
+  nh.getParam("clusterer/min_cluster_size", _min_cluster_size);
+  nh.getParam("clusterer/max_cluster_size", _max_cluster_size);
 }
 
 RosVisualizer::~RosVisualizer() {}
@@ -54,7 +55,8 @@ void RosVisualizer::initNode(ros::NodeHandle &nh)
 {
     _nh = nh;
     _cloud_pub = _nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
-    _image_pub = _nh.advertise<sensor_msgs::Image>("depth_image", 1);
+    _depth_image_pub = _nh.advertise<sensor_msgs::Image>("depth_image", 1);
+    _label_image_pub = _nh.advertise<sensor_msgs::Image>("label_image", 1);
 }
 
 void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud, const cv::Mat& label_image, const Cloud& cloud)
@@ -80,7 +82,10 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud, const cv::Mat& label_im
                 // it shows all objects labeled with 0
                 for (const auto &point_idx : point_container.points())
                 {
-                  pcl_cloud->at(point_idx).z -= 10;
+                //    pcl_cloud->at(point_idx).z -= 1000;
+                   pcl_cloud->at(point_idx).label = 0;
+                
+                // pcl_cloud-
                 }
                 continue;
             }
@@ -90,16 +95,25 @@ void RosVisualizer::LabelPCL(PointCloudT::Ptr pcl_cloud, const cv::Mat& label_im
                 if (label > labels.size())
                     labels.resize(label, vector<int>());
                 labels.at(label - 1).push_back(point_idx);
+                // pcl_cloud->at(point_idx).z -= 1000;
             }
         }
     }
     
     // filter out unfitting clusters
     for (unsigned int i = 0; i < labels.size(); i++)
-    if (labels[i].size() > _min_cluster_size && labels[i].size() < _max_cluster_size)
     {
-        for (auto ind : labels[i])
+        // int label = std::rand() % 20+10;
+        if (labels[i].size() > _min_cluster_size &&
+        labels[i].size() < _max_cluster_size) {
+            for (auto ind : labels[i])
             pcl_cloud->at(ind).label = i;
+            // pcl_cloud->at(ind).label = 10;
+        }
+        else{
+            for (auto ind : labels[i])
+            pcl_cloud->at(ind).label = 10;
+        }
     }
 }
 
@@ -133,20 +147,33 @@ void RosVisualizer::OnNewObjectReceived(const std::pair<Cloud::Ptr, cv::Mat> &cl
     PointCloudT::Ptr cloud = cloud_pair.first->ToPcl();
     LabelPCL(cloud, cloud_pair.second, *cloud_pair.first);
     PubCloud(*cloud);
-    PubImage(cloud_pair.second);
+    PubImages(cloud_pair.first->projection_ptr()->depth_image(),
+              cloud_pair.second);
 }
 
-void RosVisualizer::PubImage(const cv::Mat& label_image)
-{
-    cv_bridge::CvImage img_bridge;
-    sensor_msgs::Image ros_image;
-    std_msgs::Header header;
-    // header.seq = counter; // user defined counter
-    header.stamp = ros::Time::now();//!!!
+void RosVisualizer::PubImages(const cv::Mat &depth_image, const cv::Mat &label_image) {
+  cv_bridge::CvImage img_bridge;
+  sensor_msgs::Image ros_label_image;
+  sensor_msgs::Image ros_depth_image;
+  std_msgs::Header header;
+  // header.seq = counter; // user defined counter
+  header.stamp = ros::Time::now();  //!!!
 
-    img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO16, label_image);
-    img_bridge.toImageMsg(ros_image);
-    _image_pub.publish(ros_image);
+  // converting to ros msg
+  img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO16,
+                                  label_image);
+  img_bridge.toImageMsg(ros_label_image);
+
+  cv::Mat depth_image_to_publish;
+  depth_image.convertTo(depth_image_to_publish, CV_16U);
+  
+  img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO16,
+                                  depth_image_to_publish);
+  img_bridge.toImageMsg(ros_depth_image);
+
+  //publishing
+  _depth_image_pub.publish(ros_depth_image);
+  _label_image_pub.publish(ros_label_image);
 }
 
 } //namespace depth_clustering

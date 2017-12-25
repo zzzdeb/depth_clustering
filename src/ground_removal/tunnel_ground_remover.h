@@ -30,6 +30,7 @@
 #include <pcl/common/pca.h>
 #include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
