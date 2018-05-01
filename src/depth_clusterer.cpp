@@ -34,6 +34,7 @@
 #include "utils/velodyne_utils.h"
 
 #include "ros_bridge/cloud_odom_ros_subscriber.h"
+#include "ros_bridge/image_ros_subscriber.h"
 #include "ros_bridge/objects_publisher.h"
 #include "ros_bridge/ros_visualizer.h"
 
@@ -134,7 +135,8 @@ int main(int argc, char* argv[]) {
   int max_cluster_size;
   InitFromRosParam<int>(nh_p, "clusterer/max_cluster_size", max_cluster_size);
 
-  ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size);
+  ClustererT clusterer(angle_tollerance, min_cluster_size, max_cluster_size, 1.5);
+  // EuclideanClusterer clusterer;
   clusterer.SetDiffType(DiffFactory::DiffType::ANGLES);
   clusterer.SetCloudClient(&visualizer);
   clusterer.AddClient(&objects_publisher);
@@ -163,7 +165,8 @@ int main(int argc, char* argv[]) {
   auto proj_params_ptr = ProjectionParams::FromConfigFile(lidar_config_link);
 
   CloudOdomRosSubscriber subscriber(&nh, *proj_params_ptr, topic_clouds);
-  
+  // ImageRosSubscriber subscriber(nh, *proj_params_ptr, "/depth_image");//!!!
+
   // Ground_remover
   AbstractGroundRemover* ground_remover;
   string remover = "No Groundremover";
