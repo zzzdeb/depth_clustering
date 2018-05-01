@@ -1,19 +1,21 @@
 #Parameters for node
+# from_path: "/home/zzz/ros/algorithms/data/test2" 
 
-# erase from_path parameter if you dont run it from Moosmann's dataset.
-from_path: "/home/zzz/ros/algorithms/data/scenario1" 
-# lidar_config_link: relative path to config file. Example: 
 lidar_config_link: "/config/projection/hdl64.cfg"
+
 
 # node: {
 #   laser_frame_id: ros laser frame_id
 #   topic_clouds: topic to subscribe
+#   topic_image: topic to subcribe
 # }
+
 node: {
   laser_frame_id: "world",
   topic_clouds: "",
   topic_image: "/depth_image"
 }
+
 # ground_remover: {
 #   1.     
     # remover: "depth_ground_remover",
@@ -26,9 +28,9 @@ node: {
     # sensor_height: 
 # }
 ground_remover: {
-  remover: "depth_ground_remover",
-  angle: 6.0,
-  smooth_window_size: 5
+    remover: "depth_ground_remover",
+    angle: 6,
+    smooth_window_size: 5
 }
 # ground_remover: {
 #   remover: "tunnel_ground_remover",
@@ -41,28 +43,26 @@ ground_remover: {
 #   angle_tollerance: 10,
 #   min_cluster_size: 20,
 #   max_cluster_size: 100000
-#   factor1:          10 (default)
 # }
+
 clusterer: {
   angle_tollerance: 10,
   min_cluster_size: 20,
   max_cluster_size: 100000
 }
 
-# cloud_publisher: {
-#   topic_name: "segmented_cloud"
-# }
 cloud_publisher: {
   topic_name: "segmented_cloud"
 }
 
 # objects_publisher: {
 #   topic_name: for publisher,
-#   use_axial_bounding_box: 
+#   use_axial_bounding_box: bool
 # }
 objects_publisher: {
   topic_name: "segmented_objects",
   use_axial_bounding_box: false
 }
+
 
 

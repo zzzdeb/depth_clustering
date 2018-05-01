@@ -139,11 +139,18 @@ void ObjectsPublisher::PublishObjects(
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose = object.first;
     marker.scale = object.second;
-    marker.color.a = 0.3;  // Don't forget to set the alpha!
-    marker.color.r = 0.0;
+    double volume = marker.scale.x * marker.scale.y * marker.scale.z;
+    if (volume>30){//!!!
+      marker.color.a = 0.05;  // Don't forget to set the alpha!
+      marker.color.b = 0.0;
+    }
+    else{
+      marker.color.b = 1.0;
+      marker.color.a = 0.3;
+    }
     marker.color.g =
         static_cast<float>(id) / objects.size(); 
-    marker.color.b = 1 - marker.color.g;
+    marker.color.r = 1 - marker.color.g;
     marker.lifetime = ros::Duration(0.5);  //!!!
     // only if using a MESH_RESOURCE marker type:
     // marker.mesh_resource =

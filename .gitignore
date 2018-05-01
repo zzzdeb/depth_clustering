@@ -35,4 +35,6 @@
 
 /log/
 
+/src/eval/hand_labeling*
+
 notebooks/.ipynb_checkpoints/*

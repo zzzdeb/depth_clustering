@@ -4,6 +4,7 @@ add_subdirectory(image_labelers)
 add_subdirectory(projections)
 add_subdirectory(utils)
 add_subdirectory(ros_bridge)
+add_subdirectory(eval)
 
 find_package(catkin REQUIRED COMPONENTS
             roscpp

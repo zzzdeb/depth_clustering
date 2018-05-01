@@ -34,6 +34,7 @@
 #include "clusterers/abstract_clusterer.h"
 #include "image_labelers/diff_helpers/diff_factory.h"
 #include "image_labelers/linear_image_labeler.h"
+// #include "image_labelers/linear_image_directed_labeler.h"
 #include "projections/cloud_projection.h"
 
 #include <ros/console.h>
@@ -60,10 +61,12 @@ class ImageBasedClusterer : public AbstractClusterer {
    */
   explicit ImageBasedClusterer(Radians angle_tollerance = 8_deg,
                                uint16_t min_cluster_size = 100,
-                               uint16_t max_cluster_size = 25000)
+                               uint16_t max_cluster_size = 25000,
+                              float factor1=1)
       : AbstractClusterer(0.0, min_cluster_size, max_cluster_size),
         _counter(0),
         _angle_tollerance(angle_tollerance),
+        _factor1(factor1),
         _label_client{nullptr},
         _cloud_client{nullptr} {}
 
@@ -110,7 +113,7 @@ class ImageBasedClusterer : public AbstractClusterer {
     }
     time_utils::Timer timer;
     LabelerT image_labeler(cloud.projection_ptr()->depth_image(),
-                           cloud.projection_ptr()->params(), _angle_tollerance);
+                           cloud.projection_ptr()->params(), _angle_tollerance, _factor1);
     image_labeler.ComputeLabels(_diff_type);
     const cv::Mat* labels_ptr = image_labeler.GetLabelImage();
     ROS_INFO("image based labeling took: %lu us",
@@ -179,6 +182,7 @@ class ImageBasedClusterer : public AbstractClusterer {
  private:
   int _counter;
   Radians _angle_tollerance;
+  float _factor1;
 
   AbstractClient<cv::Mat>* _label_client;
   AbstractClient<std::pair<Cloud::Ptr, cv::Mat>>* _cloud_client;

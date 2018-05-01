@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <queue>
+#include <functional>
 
 #include "image_labelers/abstract_image_labeler.h"
 #include "image_labelers/pixel_coords.h"
@@ -49,15 +50,17 @@ class LinearImageLabeler : public AbstractImageLabeler {
    */
   explicit LinearImageLabeler(const cv::Mat& depth_image,
                               const ProjectionParams& params,
-                              const Radians& v_angle_threshold,
-                              const Radians& h_angle_threshold)
-      : AbstractImageLabeler(depth_image, params, h_angle_threshold), _v_radians_threshold(v_angle_threshold.val()) {
+                              const Radians& h_angle_threshold,
+                              float v_factor=1)
+      : AbstractImageLabeler(depth_image, params, h_angle_threshold), _v_radians_threshold(h_angle_threshold.val()*v_factor) {
+    _h_radians_threshold = h_angle_threshold.val();
     // this can probably be done at compile time
     int16_t counter = 0;
     for (int16_t r = STEP_ROW; r > 0; --r) {
       V_Neighborhood[counter++] = PixelCoord(-r, 0);
       V_Neighborhood[counter++] = PixelCoord(r, 0);
     }
+    counter = 0;
     for (int16_t c = STEP_COL; c > 0; --c) {
       H_Neighborhood[counter++] = PixelCoord(0, -c);
       H_Neighborhood[counter++] = PixelCoord(0, c);
@@ -209,6 +212,7 @@ class LinearImageLabeler : public AbstractImageLabeler {
 
 private:
   float _v_radians_threshold;
+  float _h_radians_threshold;
 };
 
 }  // namespace depth_clustering
